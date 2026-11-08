@@ -1,0 +1,14 @@
+{
+  "_comment": "MM in-house mods shown on the Modding page, in this order. Fields: name, category (small label above the name), status (one of: live, testing, development, planned; drives the filter buttons and badge), description (one or two sentences), requires (small tags at the bottom), link + link_label (optional; e.g. a Steam Workshop page; leave out to hide). To remove a mod from the site, delete its whole { ... } block.",
+  "mods": [
+    { "name": "MM Oil Wells", "category": "Economy", "status": "live", "description": "Craftable pumpjack kits plus static wells players can rent or buy. Pump crude, turn a profit.", "requires": ["DayZ"] },
+    { "name": "MM Lifeline", "category": "Roleplay", "status": "testing", "description": "Take the Medic role and answer Calls for Help from downed or knocked-out players, with a Discord ping for every call.", "requires": ["TerjeCore", "Terje Medicine"] },
+    { "name": "MM NV Zones", "category": "Gameplay", "status": "testing", "description": "Admin-defined zones where night vision stops working. Bring a flashlight.", "requires": ["DayZ"] },
+    { "name": "MM BlackBox", "category": "Server tools", "status": "development", "description": "Server-side logging of deaths and their real cause, vehicles, travel and interactions, with an easy viewer for admins.", "requires": ["Server-side only"] },
+    { "name": "MM Trade Runs", "category": "Economy", "status": "development", "description": "ArcheAge-style trade packs: craft them at a workbench, haul them overland, and earn more for longer and riskier runs.", "requires": ["Expansion"] },
+    { "name": "MM Quest System", "category": "Quests", "status": "development", "description": "An MM-styled rework of JuggaloJ419's DZ_QuestSystem, with a step-by-step in-game quest wizard.", "requires": ["Expansion"] },
+    { "name": "MM Bar Tending", "category": "Roleplay", "status": "development", "description": "Bartender NPCs selling drinks from an admin-configured menu. Special drinks with buffs are planned.", "requires": ["Expansion", "TerjeCore", "Terje Skills"] },
+    { "name": "MM Welcome Screen", "category": "Server tools", "status": "development", "description": "Welcome message, rules and changelog you acknowledge once, and can reopen any time.", "requires": ["DayZ"] },
+    { "name": "MM Vehicle Impound", "category": "Server tools", "status": "planned", "description": "Vehicles left too long in safe zones or garage spots get impounded. Pay the fee or watch it go to auction. First offence is free.", "requires": ["Expansion"] }
+  ]
+}

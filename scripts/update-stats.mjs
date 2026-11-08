@@ -1,0 +1,216 @@
+#!/usr/bin/env node
+/* =====================================================================
+   Misfit Mercenaries — stats updater
+   Runs inside the GitHub Action every 30 minutes (see .github/workflows/site.yml).
+   No packages needed: plain Node 20+.
+
+   What it does:
+   1. Reads site/data/servers.json for the server list.
+   2. Live status: asks each server directly over the Steam query protocol
+      (needs "query_port" set). If that fails and CFTools is set up, it falls
+      back to counting players from CFTools.
+   3. Leaderboards + player lookup: pulls the top 100 per stat from the
+      CFTools Data API (needs "cftools_server_api_id" set, plus the
+      CFTOOLS_APP_ID and CFTOOLS_SECRET repository secrets).
+   4. Writes site/data/live/status.json, history.json, leaderboards.json, players.json.
+
+   If something fails, the previous files are kept, so the site never goes blank.
+   Run locally with:  node scripts/update-stats.mjs
+   ===================================================================== */
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import dgram from 'node:dgram';
+import dns from 'node:dns/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const CONFIG = process.env.MM_CONFIG || path.join(ROOT, 'site/data/servers.json');
+const LIVE = process.env.MM_LIVE || path.join(ROOT, 'site/data/live');
+const HISTORY_DAYS = 35;                       // how much player-count history to keep
+const STATS = ['kills', 'kdratio', 'longest_shot', 'longest_kill', 'playtime', 'deaths'];
+const SUM_STATS = ['kills', 'deaths', 'playtime', 'suicides', 'hits'];
+const MAX_STATS = ['longest_shot', 'longest_kill'];
+const CF_BASE = process.env.CFTOOLS_BASE || 'https://data.cftools.cloud'; // override only for testing
+const UA = 'MisfitMercenariesSite/1.0 (+https://github.com/meccmax)';
+
+const log = (...a) => console.log('[stats]', ...a);
+
+async function readJSON(file, fallback) {
+  try { return JSON.parse(await readFile(file, 'utf8')); } catch { return fallback; }
+}
+async function writeJSON(name, data) {
+  await mkdir(LIVE, { recursive: true });
+  await writeFile(path.join(LIVE, name), JSON.stringify(data));
+  log('wrote', name);
+}
+
+/* ---------- Steam A2S_INFO query ---------- */
+async function a2sInfo(host, port, timeoutMs = 3000) {
+  const { address } = await dns.lookup(host, { family: 4 });
+  const base = Buffer.concat([Buffer.from([0xff, 0xff, 0xff, 0xff, 0x54]), Buffer.from('Source Engine Query\0', 'latin1')]);
+  return new Promise((resolve, reject) => {
+    const sock = dgram.createSocket('udp4');
+    const timer = setTimeout(() => { sock.close(); reject(new Error('timeout')); }, timeoutMs);
+    sock.on('error', (e) => { clearTimeout(timer); sock.close(); reject(e); });
+    sock.on('message', (msg) => {
+      const type = msg[4];
+      if (type === 0x41) { // challenge: resend with the 4 challenge bytes
+        sock.send(Buffer.concat([base, msg.subarray(5, 9)]), port, address);
+        return;
+      }
+      if (type !== 0x49) return;
+      clearTimeout(timer); sock.close();
+      try {
+        let o = 6; // skip header + protocol byte
+        const str = () => { const end = msg.indexOf(0, o); const s = msg.toString('utf8', o, end); o = end + 1; return s; };
+        const name = str(), map = str(); str(); str(); o += 2;
+        const players = msg[o], max = msg[o + 1], bots = msg[o + 2];
+        resolve({ name, map, players: Math.max(0, players - bots), max_players: max });
+      } catch (e) { reject(e); }
+    });
+    sock.send(base, port, address);
+  });
+}
+async function a2sWithRetry(host, port) {
+  for (let i = 0; i < 3; i++) {
+    try { return await a2sInfo(host, port); } catch (e) { if (i === 2) throw e; }
+  }
+}
+
+/* ---------- CFTools Data API ---------- */
+let cfToken = null;
+async function cfAuth() {
+  const id = process.env.CFTOOLS_APP_ID, secret = process.env.CFTOOLS_SECRET;
+  if (!id || !secret) return false;
+  const r = await fetch(`${CF_BASE}/v1/auth/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
+    body: JSON.stringify({ application_id: id, secret })
+  });
+  if (!r.ok) throw new Error(`CFTools auth failed: HTTP ${r.status}`);
+  cfToken = (await r.json()).token;
+  return true;
+}
+async function cfGet(p) {
+  const r = await fetch(`${CF_BASE}/${p}`, { headers: { Authorization: `Bearer ${cfToken}`, 'User-Agent': UA } });
+  if (!r.ok) throw new Error(`CFTools ${p}: HTTP ${r.status}`);
+  return r.json();
+}
+async function cfLeaderboard(serverApiId, stat) {
+  const q = new URLSearchParams({ stat, order: '1', limit: '100' }); // order 1 = highest first
+  const res = await cfGet(`v1/server/${serverApiId}/leaderboard?${q}`);
+  return res.leaderboard || [];
+}
+async function cfOnlineCount(serverApiId) {
+  const res = await cfGet(`v1/server/${serverApiId}/GSM/list`);
+  return (res.sessions || []).length;
+}
+
+/* ---------- main ---------- */
+async function main() {
+  const cfg = await readJSON(CONFIG, null);
+  if (!cfg) throw new Error('site/data/servers.json is missing or invalid');
+  const host = cfg.host;
+  const hidden = new Set(((cfg.hidden_players || {}).cftools_ids) || []);
+  const servers = cfg.servers || [];
+  const wantsQuery = servers.some((s) => s.query_port);
+  const wantsCf = servers.some((s) => s.cftools_server_api_id);
+  if (!wantsQuery && !wantsCf) {
+    log('No query_port or cftools_server_api_id set in servers.json yet. Nothing to do.');
+    return;
+  }
+
+  let cfReady = false;
+  if (wantsCf) {
+    try { cfReady = await cfAuth(); if (!cfReady) log('CFTOOLS_APP_ID / CFTOOLS_SECRET not set: skipping leaderboards'); }
+    catch (e) { log(e.message); }
+  }
+
+  const now = new Date();
+  const nowSec = Math.floor(now.getTime() / 1000);
+
+  /* 1. status */
+  const status = { _comment: 'Generated by scripts/update-stats.mjs. Do not edit by hand.', generated_at: now.toISOString(), servers: {} };
+  for (const s of servers) {
+    let st = null;
+    if (s.query_port) {
+      try {
+        const info = await a2sWithRetry(host, s.query_port);
+        st = { online: true, players: info.players, max_players: info.max_players, source: 'steam-query' };
+      } catch (e) { log(`${s.id}: steam query failed (${e.message})`); }
+    }
+    if (!st && cfReady && s.cftools_server_api_id) {
+      try { st = { online: true, players: await cfOnlineCount(s.cftools_server_api_id), max_players: s.slots || null, source: 'cftools' }; }
+      catch (e) { log(`${s.id}: CFTools player list failed (${e.message})`); }
+    }
+    if (!st && (s.query_port || (cfReady && s.cftools_server_api_id))) st = { online: false, players: 0, max_players: s.slots || null };
+    if (st) status.servers[s.id] = st;
+  }
+  if (Object.keys(status.servers).length) await writeJSON('status.json', status);
+
+  /* 2. history */
+  const history = await readJSON(path.join(LIVE, 'history.json'), { servers: {} });
+  history._comment = 'Player count over time: [unix seconds, players or null when offline]. Generated; do not edit by hand.';
+  history.generated_at = now.toISOString();
+  const cutoff = nowSec - HISTORY_DAYS * 86400;
+  for (const s of servers) {
+    const st = status.servers[s.id];
+    if (!st) continue;
+    const arr = (history.servers[s.id] || []).filter((p) => p[0] >= cutoff);
+    arr.push([nowSec, st.online ? st.players : null]);
+    history.servers[s.id] = arr;
+  }
+  if (Object.keys(status.servers).length) await writeJSON('history.json', history);
+
+  /* 3. leaderboards + players */
+  if (!cfReady) return;
+  const lb = { _comment: 'Top 100 per stat from CFTools. Generated; do not edit by hand.', generated_at: now.toISOString(), stats: STATS, servers: {}, combined: {} };
+  const people = new Map(); // cftools_id -> { name, servers: {srv: stats}, ranks: {srv: {stat: rank}} }
+  let any = false;
+  for (const s of servers) {
+    if (!s.cftools_server_api_id) continue;
+    lb.servers[s.id] = {};
+    for (const stat of STATS) {
+      try {
+        const rows = (await cfLeaderboard(s.cftools_server_api_id, stat)).filter((r) => !hidden.has(r.cftools_id));
+        any = true;
+        lb.servers[s.id][stat] = rows.map((r, i) => ({ rank: i + 1, name: r.latest_name, value: r[stat] ?? 0 }));
+        rows.forEach((r, i) => {
+          const p = people.get(r.cftools_id) || { name: r.latest_name, servers: {}, ranks: {} };
+          p.name = r.latest_name || p.name;
+          p.servers[s.id] = {
+            kills: r.kills || 0, deaths: r.deaths || 0, suicides: r.suicides || 0, hits: r.hits || 0,
+            playtime: r.playtime || 0, kdratio: r.kdratio || 0, longest_kill: r.longest_kill || 0, longest_shot: r.longest_shot || 0
+          };
+          (p.ranks[s.id] = p.ranks[s.id] || {})[stat] = i + 1;
+          people.set(r.cftools_id, p);
+        });
+      } catch (e) { log(`${s.id} ${stat}: ${e.message}`); }
+    }
+  }
+  if (!any) { log('No leaderboard data received; keeping previous files'); return; }
+
+  // combined board across servers (built from each server's top 100)
+  const combined = [...people.entries()].map(([id, p]) => {
+    const t = { name: p.name };
+    for (const k of SUM_STATS) t[k] = Object.values(p.servers).reduce((a, s) => a + (s[k] || 0), 0);
+    for (const k of MAX_STATS) t[k] = Math.max(0, ...Object.values(p.servers).map((s) => s[k] || 0));
+    t.kdratio = t.deaths ? t.kills / t.deaths : t.kills;
+    return t;
+  });
+  for (const stat of STATS) {
+    lb.combined[stat] = combined
+      .filter((p) => (p[stat] || 0) > 0)
+      .sort((a, b) => b[stat] - a[stat])
+      .slice(0, 100)
+      .map((p, i) => ({ rank: i + 1, name: p.name, value: stat === 'kdratio' ? +p[stat].toFixed(2) : p[stat] }));
+  }
+  await writeJSON('leaderboards.json', lb);
+  await writeJSON('players.json', {
+    _comment: 'Player lookup index: everyone on at least one top-100 board. Generated; do not edit by hand.',
+    generated_at: now.toISOString(),
+    players: [...people.values()].sort((a, b) => a.name.localeCompare(b.name))
+  });
+}
+
+main().catch((e) => { console.error('[stats] failed:', e.message); process.exitCode = 1; });

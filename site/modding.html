@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modding — Misfit Mercenaries</title>
+<meta name="description" content="Original DayZ mods built in-house for Misfit Mercenaries servers: economy, roleplay, gameplay and server tools.">
+<meta name="theme-color" content="#FF6B1A">
+<meta property="og:title" content="Modding — Misfit Mercenaries">
+<meta property="og:description" content="Original DayZ mods built in-house for Misfit Mercenaries servers: economy, roleplay, gameplay and server tools.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/css/mm.css">
+<script src="assets/js/site.js" defer></script>
+
+</head>
+<body data-page="modding">
+<div id="site-header"></div>
+<main id="main">
+<section class="page-head gridbg">
+  <div class="wrap split" style="align-items:flex-end">
+    <div class="grow stack" style="gap:20px">
+      <div class="hud-o">// MM Workshop</div>
+      <h1 class="display">Built in-house.<br><span class="accent">Built for MM.</span></h1>
+      <p class="lead">Original DayZ mods written from scratch for our servers. Some are live, some are on the test bench, and a few will land on the Steam Workshop for everyone.</p>
+    </div>
+    <div class="side panel brk pad stack" style="gap:12px"><span class="hud">Our standard</span><p class="body"><strong style="color:var(--ink)">100% our own code.</strong> No copied, traced or reworked code from other mods. When we build on someone's open work, we credit them by name.</p></div>
+  </div>
+</section>
+
+<section class="wrap section-sm stack-lg" style="padding-bottom:96px">
+  <div class="row" role="group" aria-label="Filter mods by status" data-filter-group="mods">
+    <button type="button" class="chip" data-filter="all" aria-pressed="true">All mods</button>
+    <button type="button" class="chip" data-filter="live" aria-pressed="false">Live</button>
+    <button type="button" class="chip" data-filter="testing" aria-pressed="false">In testing</button>
+    <button type="button" class="chip" data-filter="development" aria-pressed="false">In development</button>
+    <button type="button" class="chip" data-filter="planned" aria-pressed="false">Planned</button>
+  </div>
+  <div id="mod-grid" class="grid g-340" data-filter-target="mods"><p class="empty">Loading mods…</p></div>
+</section>
+
+<section class="band">
+  <div class="wrap section stack-lg">
+    <div class="stack" style="gap:12px"><div class="hud-o">// How a mod ships</div><h2 class="h2">From idea to live server</h2></div>
+    <ol class="steps grid g-240" style="gap:16px">
+      <li class="panel pad stack" style="gap:8px"><span class="hud-o">Stage 01</span><h3 class="h4">Community idea</h3><p class="body">Suggestions and polls in Discord shape what we build next.</p></li>
+      <li class="panel pad stack" style="gap:8px"><span class="hud-o">Stage 02</span><h3 class="h4">Build</h3><p class="body">Written from scratch, configurable through commented JSON.</p></li>
+      <li class="panel pad stack" style="gap:8px"><span class="hud-o">Stage 03</span><h3 class="h4">Test server</h3><p class="body">Shaken down on our test server, with a memory and stability check.</p></li>
+      <li class="panel pad stack" style="gap:8px"><span class="hud-o">Stage 04</span><h3 class="h4">Live</h3><p class="body">Rolled onto MM servers, then to the Steam Workshop when ready.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="wrap section grid g-340">
+  <div class="panel brk pad-lg stack"><div class="hud-o">// Artists wanted</div><h3 class="h3" style="font-size:30px">Make gear with us</h3><p class="body">We have a retexture guide for artists joining the MM mod workflow, and DayZ Kitbash turns your textures into a working clothing mod.</p><div class="row" style="padding-top:6px"><a class="btn btn-p btn-sm" href="tools.html">Get DayZ Kitbash</a><a class="btn btn-g btn-sm" href="https://discord.gg/JT9wvBrYHt">Ask for the guide</a></div></div>
+  <div class="panel brk pad-lg stack"><div class="hud-o">// Feedback</div><h3 class="h3" style="font-size:30px">Found a bug? Got an idea?</h3><p class="body">Post it in the forums with the server, the time and what happened. Mod ideas go in Suggestions.</p><div class="row" style="padding-top:6px"><a class="btn btn-p btn-sm" href="forums.html">Bug reports</a><a class="btn btn-g btn-sm" href="forums.html">Suggestions</a></div></div>
+</section>
+</main>
+<div id="site-footer"></div>
+</body>
+</html>

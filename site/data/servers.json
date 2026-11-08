@@ -1,0 +1,58 @@
+{
+  "_comment": "MM DayZ server list. The Servers page cards, the Stats page and the automatic stats feed all read this one file, so edit servers here only. Fields per server: id = short unique name used in links and stats files (lowercase, no spaces; do not change once stats exist or history starts fresh). name / map / badge / description / style / slots = text shown on the site (leave style or slots as null to show 'Ask in Discord'). game_port = the port players connect to (null hides the copy button). query_port = the steamQueryPort from that server's serverDZ.cfg, used by the stats feed to check online status and player count (null = skip). cftools_server_api_id = the 'Server ID' from the CFTools Cloud server's API settings, used for leaderboards (null = no leaderboards for this server). color = this server's line colour on the population chart (checked for colour-blind safety, keep these three as they are). restart_hours_utc = hours of the day (0-23, UTC) when the server restarts, used to draw restart markers and the 'next restart' time; leave as [] if unknown. mods = tags shown on the card. image = optional screenshot path, e.g. assets/img/deer-isle.jpg (null shows a placeholder).",
+  "host": "game.misfitmercenaries.com",
+  "servers": [
+    {
+      "id": "deer-isle",
+      "name": "MM Deer Isle",
+      "map": "Deer Isle",
+      "badge": "Flagship",
+      "description": "Our longest-running DayZ server. Expansion market and AI, quests, a player-driven economy and our in-house mods.",
+      "style": null,
+      "slots": null,
+      "game_port": null,
+      "query_port": null,
+      "cftools_server_api_id": null,
+      "color": "#d95926",
+      "restart_hours_utc": [],
+      "mods": ["Expansion", "TerjeCore", "Terje Skills", "Terje Medicine", "A6 Weapons"],
+      "image": null
+    },
+    {
+      "id": "sakhal",
+      "name": "MM Sakhal",
+      "map": "Sakhal",
+      "badge": "Hardcore",
+      "description": "Survival first: hard but never unfair. Cold, fuel and heat are the real enemy, loot is lean, AI is a genuine threat and long distances are on purpose.",
+      "style": null,
+      "slots": null,
+      "game_port": null,
+      "query_port": null,
+      "cftools_server_api_id": null,
+      "color": "#3987e5",
+      "restart_hours_utc": [],
+      "mods": ["Expansion", "TerjeCore", "Terje Skills", "A6 Gunplay", "A6 Weapons"],
+      "image": null
+    },
+    {
+      "id": "badlands",
+      "name": "MM Badlands",
+      "map": "Nasdara",
+      "badge": "Newest",
+      "description": "Built for the Badlands release on Nasdara. Deer Isle-level difficulty and content, with custom DNA keycard rooms on the way.",
+      "style": null,
+      "slots": null,
+      "game_port": null,
+      "query_port": null,
+      "cftools_server_api_id": null,
+      "color": "#199e70",
+      "restart_hours_utc": [],
+      "mods": ["Expansion", "TerjeCore", "Terje Skills", "A6 Gunplay", "A6 Weapons"],
+      "image": null
+    }
+  ],
+  "hidden_players": {
+    "_comment": "Players who asked to be left off public leaderboards and lookup. Add their CFTools ID (from their CFTools profile URL) to the list below; the next stats update removes them.",
+    "cftools_ids": []
+  }
+}
