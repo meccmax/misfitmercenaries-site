@@ -38,8 +38,8 @@ ul,ol{margin:0}
 
 /* ---------- layout ---------- */
 .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
-.section{padding:96px 0}
-.section-sm{padding:56px 0}
+.section{padding-top:96px;padding-bottom:96px}
+.section-sm{padding-top:56px;padding-bottom:56px}
 .band{background:var(--bg-2);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
 .stack{display:flex;flex-direction:column;gap:16px}
 .stack-lg{display:flex;flex-direction:column;gap:32px}
@@ -71,6 +71,7 @@ ul,ol{margin:0}
 .gridbg{background-color:var(--bg);background-image:linear-gradient(rgba(196,201,208,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(196,201,208,.045) 1px,transparent 1px);background-size:56px 56px}
 .page-head{border-bottom:1px solid var(--line-2)}
 .page-head .wrap{padding-top:88px;padding-bottom:64px;display:flex;flex-direction:column;gap:20px}
+.page-head .wrap.split{flex-direction:row;gap:48px}
 
 /* ---------- panels ---------- */
 .panel{position:relative;background:var(--panel);border:1px solid var(--line)}
@@ -212,7 +213,7 @@ table.tbl{width:100%;min-width:520px;border-collapse:collapse;font-size:16px}
   @keyframes sweep{to{transform:rotate(360deg)}}
 }
 @media (max-width:700px){
-  .section{padding:64px 0}
+  .section{padding-top:64px;padding-bottom:64px}
   .pad-lg{padding:28px}
   .hero .radar{opacity:.25}
   .stat-strip > div{border-right:0;border-bottom:1px solid var(--line-2)}

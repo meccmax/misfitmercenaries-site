@@ -77,7 +77,7 @@
       '<nav class="foot-col" aria-label="Footer: site"><span class="hud" style="padding-bottom:8px">Navigate</span>' +
       '<a href="servers.html">Servers</a><a href="stats.html">Stats &amp; leaderboards</a><a href="modding.html">Modding</a><a href="tools.html">Tools</a><a href="media.html">Media</a></nav>' +
       '<nav class="foot-col" aria-label="Footer: community"><span class="hud" style="padding-bottom:8px">Community</span>' +
-      '<a href="forums.html">Forums</a><a href="about.html">About us</a><a href="join.html">Rules &amp; joining</a><a href="join.html#support">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
+      '<a href="forums.html">Forums</a><a href="about.html">About us</a><a href="join.html">Rules &amp; joining</a><a href="support.html">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
       '<div class="foot-col" style="min-width:260px;gap:10px"><span class="hud" style="padding-bottom:8px">Server nodes</span>' +
       '<div class="ipbox"><span>game.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Main</span></div>' +
       '<div class="ipbox"><span>servers.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Backup</span></div></div>' +
@@ -146,12 +146,14 @@
           '<div class="card-top"><span class="hud-o">' + esc(s.badge || '') + '</span>' + status + '</div>' +
           '<h3 class="h3" style="font-size:30px">' + esc(s.name) + '</h3>' +
           '<p class="body">' + esc(s.description) + '</p>' +
+          (s.server_name ? '<div class="stack" style="gap:4px"><span class="hud" style="font-size:11px">In the server browser</span><span class="mono" style="font-size:13px;color:var(--silver);overflow-wrap:anywhere">' + esc(s.server_name) + '</span></div>' : '') +
           '<dl class="dl"><dt>Map</dt><dd>' + esc(s.map) + '</dd><dt>Style</dt><dd>' + esc(s.style || 'Ask in Discord') + '</dd>' +
           '<dt>Slots</dt><dd>' + esc(s.slots || 'Ask in Discord') + '</dd></dl>' +
           (addr ? '<div class="ipbox"><span>' + esc(addr) + '</span><button class="copy" type="button" data-copy="' + esc(addr) + '">Copy</button></div>'
                 : '<div class="ipbox"><span>' + esc(host) + '</span><span class="hud" style="font-size:10px;padding-right:6px">Port in Discord</span></div>') +
           '<div class="tags">' + (s.mods || []).map(function (m) { return '<span class="tag">' + esc(m) + '</span>'; }).join('') + '</div>' +
-          '<div class="row push" style="padding-top:8px"><a class="btn btn-p btn-sm" href="stats.html?server=' + esc(s.id) + '">Live stats</a><a class="btn btn-g btn-sm" href="join.html#rules">Server rules</a></div>' +
+          '<div class="row push" style="padding-top:8px"><a class="btn btn-p btn-sm" href="stats.html?server=' + esc(s.id) + '">Live stats</a>' +
+          (s.battlemetrics ? '<a class="btn btn-g btn-sm" href="' + esc(s.battlemetrics) + '">BattleMetrics</a>' : '<a class="btn btn-g btn-sm" href="join.html#rules">Server rules</a>') + '</div>' +
           '</div></article>';
       }).join('');
     }).catch(function () {
