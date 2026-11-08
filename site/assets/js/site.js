@@ -44,8 +44,8 @@
     }).join('');
     slot.outerHTML =
       '<a class="skip" href="#main">Skip to content</a>' +
-      '<div class="topbar"><div class="wrap"><span class="hud">MM // Misfits since the Ultima Online days</span>' +
-      '<span class="hud"><span style="color:#FF8A3D">&#9632;</span> Node: game.misfitmercenaries.com</span></div></div>' +
+      '<div class="topbar"><div class="wrap">' +
+      '<span class="hud" style="margin-left:auto"><span style="color:#FF8A3D">&#9632;</span> Node: game.misfitmercenaries.com</span></div></div>' +
       '<header class="site-header"><div class="wrap">' +
       '<a class="brand" href="index.html" aria-label="Misfit Mercenaries home">' + LOGO +
       '<span class="brand-name"><b>Misfit</b><span>Mercenaries</span></span></a>' +
