@@ -148,7 +148,9 @@
           '<p class="body">' + esc(s.description) + '</p>' +
           (s.server_name ? '<div class="stack" style="gap:4px"><span class="hud" style="font-size:11px">In the server browser</span><span class="mono" style="font-size:13px;color:var(--silver);overflow-wrap:anywhere">' + esc(s.server_name) + '</span></div>' : '') +
           '<dl class="dl"><dt>Map</dt><dd>' + esc(s.map) + '</dd><dt>Style</dt><dd>' + esc(s.style || 'Ask in Discord') + '</dd>' +
-          '<dt>Slots</dt><dd>' + esc(s.slots || 'Ask in Discord') + '</dd></dl>' +
+          '<dt>Slots</dt><dd>' + esc(s.slots || 'Ask in Discord') + '</dd>' +
+          (s.view ? '<dt>View</dt><dd>' + esc(s.view) + '</dd>' : '') +
+          '<dt>DLC</dt><dd>' + (s.dlc ? '<span class="tag tag-o">' + esc(s.dlc) + ' required</span>' : 'None needed') + '</dd></dl>' +
           (addr ? '<div class="ipbox"><span>' + esc(addr) + '</span><button class="copy" type="button" data-copy="' + esc(addr) + '">Copy</button></div>'
                 : '<div class="ipbox"><span>' + esc(host) + '</span><span class="hud" style="font-size:10px;padding-right:6px">Port in Discord</span></div>') +
           '<div class="tags">' + (s.mods || []).map(function (m) { return '<span class="tag">' + esc(m) + '</span>'; }).join('') + '</div>' +
