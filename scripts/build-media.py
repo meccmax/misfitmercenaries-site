@@ -62,15 +62,29 @@ def make_thumb(src, album_dir):
         return rel, None, None
 
 
-def make_poster(src, album_dir):
-    """Grab a frame ~1 s into a video file as its preview image (needs ffmpeg; skipped if missing)."""
-    if not shutil.which("ffmpeg"):
+def find_ffmpeg():
+    """ffmpeg from the system if installed, otherwise the ready-made copy from the imageio-ffmpeg package."""
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
         return None
+
+
+def make_poster(src, album_dir):
+    """Grab a frame ~1 s into a video file as its preview image (needs ffmpeg; skipped if missing).
+    Posters made on earlier runs are reused, so ffmpeg only runs for new clips."""
     digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
     out = album_dir / "thumbs" / f"{src.stem}-{digest}.jpg"
     if not out.exists():
+        ffmpeg = find_ffmpeg()
+        if not ffmpeg:
+            return None
         out.parent.mkdir(exist_ok=True)
-        r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "1", "-i", str(src), "-frames:v", "1",
+        r = subprocess.run([ffmpeg, "-v", "error", "-y", "-ss", "1", "-i", str(src), "-frames:v", "1",
                             "-vf", f"scale={THUMB_W}:-2", "-q:v", "4", str(out)], capture_output=True)
         if r.returncode != 0 or not out.exists():
             return None

@@ -78,11 +78,9 @@ jobs:
 
       - name: Build media index (screenshots, thumbnails, videos)
         run: |
-          pip install --quiet pillow
-          # ffmpeg makes the preview frame for uploaded video clips (only installed when clips exist)
-          if find site/media \( -name '*.mp4' -o -name '*.webm' \) | grep -q . && ! command -v ffmpeg >/dev/null; then
-            sudo apt-get -qq update && sudo apt-get -qq install -y --no-install-recommends ffmpeg >/dev/null
-          fi
+          # pillow makes the thumbnails; imageio-ffmpeg is a ready-made ffmpeg for video preview frames
+          # (much faster than installing ffmpeg with apt, which took ~9 minutes on Ubuntu 26 runners)
+          pip install --quiet pillow imageio-ffmpeg
           python scripts/build-media.py
 
       - uses: actions/configure-pages@v5
