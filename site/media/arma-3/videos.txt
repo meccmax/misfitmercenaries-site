@@ -3,3 +3,4 @@
 # any other link shows as a button. Add a title after a | if you want one, e.g.
 # https://www.youtube.com/watch?v=abc123 | Convoy ambush at the docks
 # Lines starting with # are ignored.
+https://youtu.be/1yUGTnysgJw | Misfit Mercenaries | Event Night | 02/22/2025
