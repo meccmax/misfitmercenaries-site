@@ -39,7 +39,8 @@ Open `site/data/servers.json` and, for each DayZ server, fill in:
 
 With just `query_port` filled in, status and population graphs start working on the next run. The game's query port must be reachable from the internet over UDP (it already is if your server shows in the DayZ server browser).
 
-### 3. Connect CFTools (leaderboards and player lookup)
+### 3. Connect CFTools (optional backup for player counts)
+The leaderboards come from MM BlackBox (see below). CFTools is only used to count players when a server doesn't answer the Steam query; the old CFTools leaderboards are archived in `site/data/archive/cftools.json` and shown on the Stats page under "Before BlackBox".
 1. In the CFTools Developer Portal (developer.cftools.cloud), create an **Application**. Note its **Application ID** and **Secret**.
 2. Use the application's **grant link** to give it access to each MM server in your CFTools Cloud account.
 3. For each server, copy its **Server API ID** (from the server's API/integration settings in CFTools Cloud) into `cftools_server_api_id` in `site/data/servers.json`.
@@ -80,10 +81,11 @@ Each game has its own folder under `site/media/` (for example `site/media/dayz/`
 
 ## How the stats work
 - The workflow in `.github/workflows/site.yml` runs on every push and every 30 minutes (GitHub sometimes runs scheduled jobs a few minutes late).
-- `scripts/update-stats.mjs` queries each server, pulls CFTools leaderboards (top 100 per stat), and writes JSON files that the Stats page reads.
+- `scripts/update-stats.mjs` queries each server for status and player counts, pulls the MM BlackBox stats (`scripts/blackbox.mjs`), and writes JSON files that the Stats page reads.
 - Those files are kept on a separate branch called `stats-data`, so the `main` history stays clean. Don't edit that branch by hand.
 - Population history is kept for 35 days.
-- **Hiding a player:** add their Steam64 ID to `hidden_players.steam_ids` (or CFTools ID to `cftools_ids`) in `site/data/servers.json`. They drop off the boards and lookup on the next run.
+- **Hiding a player:** add their Steam64 ID to MM BlackBox's `exclude_from_public_stats` list on each server. They drop off the boards and lookup at BlackBox's next export.
+- **Old CFTools boards:** frozen in `site/data/archive/cftools.json` (hours played and deaths up to 9 Nov 2026), shown under "Before BlackBox". Nothing updates it; delete the file to remove that option.
 - GitHub pauses scheduled workflows in a repo with no activity for 60 days. The stats updates count as activity, but if it ever stops, just click **Run workflow** once.
 
 ## MM BlackBox player stats (AI kills, travel, longest shot …)

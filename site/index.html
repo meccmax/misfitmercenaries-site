@@ -141,25 +141,16 @@
 </main>
 <div id="site-footer"></div>
 <script>
-/* Home "Top mercs" preview: top 3 players by all-time hours played across all servers.
-   Uses the CFTools records (they include time from before MM BlackBox started counting),
-   and the BlackBox board only if CFTools has nothing. */
+/* Home "Top mercs" preview: top 3 players by all-time hours played across all servers (MM BlackBox). */
 document.addEventListener('DOMContentLoaded', function () {
-  var get = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }); };
-  get('data/live/leaderboards.json').then(function (lb) {
-    var rows = (lb.combined && lb.combined.playtime) || [];
-    if (!rows.length) throw 0;
-    return rows;
-  }).catch(function () {
-    return get('data/live/bb/boards-network-all_time.json').then(function (b) {
-      return (b.playtime || []).map(function (r) { return { name: r[1], value: r[2] }; });
-    });
+  fetch('data/live/bb/boards-network-all_time.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (b) {
+    return (b.playtime || []).map(function (r) { return { name: r[1], value: r[2] }; });
   }).then(function (rows) {
     if (!rows.length) return;
     var esc = window.MM.esc;
     document.getElementById('home-top').innerHTML = rows.slice(0, 3).map(function (p, i) {
       return '<li style="display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #1E2126">' +
-        '<span class="rank ' + (i === 0 ? 'top1' : 'top3') + '">0' + (i + 1) + '</span><span>' + esc(p.name) + '</span><span class="mono" style="color:var(--silver)">' + Math.round(p.value / 3600).toLocaleString() + ' h</span></li>';
+        '<span class="rank ' + (i === 0 ? 'top1' : 'top3') + '">0' + (i + 1) + '</span><span>' + esc(p.name) + '</span><span class="mono" style="color:var(--silver)">' + (p.value < 3600 ? Math.max(1, Math.round(p.value / 60)) + ' min' : Math.round(p.value / 3600).toLocaleString() + ' h') + '</span></li>';
     }).join('');
   }).catch(function () {});
 });

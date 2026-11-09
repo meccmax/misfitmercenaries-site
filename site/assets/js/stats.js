@@ -3,11 +3,10 @@
    Reads:  data/servers.json            (server list, colours, restart hours)
            data/live/status.json        (online / players right now)
            data/live/history.json       (player count over time)
-           data/live/leaderboards.json  (top 100 per stat, per server + combined)
-           data/live/players.json       (lookup index)
-           data/live/bb/…               MM BlackBox stats (AI kills, travel, longest shot …).
-                                        When these exist they drive the leaderboards, lookup
-                                        and records; the CFTools boards are the fallback.
+           data/live/bb/…               MM BlackBox stats (AI kills, travel, longest shot …):
+                                        leaderboards, lookup, causes of death and records
+           data/archive/cftools.json    old CFTools boards (hours, deaths), frozen; shown
+                                        under "Before BlackBox"
    The data/live files are written by scripts/update-stats.mjs (GitHub Action).
    If they don't exist yet, the page shows "not connected" placeholders.
    ===================================================================== */
@@ -18,8 +17,8 @@
   var opt = function (p) { return p.catch(function () { return null; }); };
 
   var CATS = [
-    { id: 'playtime', label: 'Playtime', unit: 'Hours', fmt: hours },
-    { id: 'deaths', label: 'Deaths', unit: 'Deaths', fmt: num }
+    { id: 'playtime', label: 'Hours played', unit: 'Hours', fmt: hours },
+    { id: 'deaths', label: 'Most deaths', unit: 'Deaths', fmt: num }
   ];
   var RANGES = [
     { id: '24h', label: '24h', name: 'last 24 hours', ms: 864e5 },
@@ -29,7 +28,7 @@
 
   function num(v) { return (+v || 0).toLocaleString(); }
   function metres(v) { return (+v || 0) ? Math.round(+v).toLocaleString() + ' m' : '—'; }
-  function hours(sec) { return (+sec || 0) ? Math.round(+sec / 3600).toLocaleString() + ' h' : '—'; }
+  function hours(sec) { sec = +sec || 0; return !sec ? '—' : sec < 3600 ? Math.max(1, Math.round(sec / 60)) + ' min' : Math.round(sec / 3600).toLocaleString() + ' h'; }
 
   function dur(sec) {
     sec = +sec || 0; if (!sec) return '—';
@@ -74,7 +73,7 @@
 
   var params = new URLSearchParams(location.search);
   var state = { srv: params.get('server') || 'all', range: '24h', cat: 'playtime', period: 'all_time', group: 'survival', board: 'playtime', more: false, look: null };
-  var D = { cfg: null, status: null, history: null, lb: null, players: null, bb: null, bbIdx: null, cache: {} };
+  var D = { cfg: null, status: null, history: null, arch: null, bb: null, bbIdx: null, cache: {} };
 
   function chips(el, items, current, onPick) {
     el.innerHTML = items.map(function (it) {
@@ -229,10 +228,11 @@
   /* =================== MM BlackBox helpers =================== */
   function scope() { return state.srv === 'all' ? 'network' : state.srv; }
   function seasonName(id) { id = String(id || ''); return id ? id.replace(/[-_]+/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }) : 'This season'; }
-  function curSeason() { return state.srv === 'all' ? D.bb.network_season : ((D.bb.servers[state.srv] || {}).season_id); }
-  function pastEntry() { var id = state.period.indexOf('past-') === 0 ? state.period.slice(5) : null; return id ? D.bb.past_seasons.filter(function (p) { return p.season_id === id; })[0] : null; }
-  function periodName() { var p = pastEntry(); return state.period === 'all_time' ? 'All-time' : p ? seasonName(p.season_id) + ' (ended)' : seasonName(curSeason()); }
-  function hasScope() { var p = pastEntry(); return p ? !!p.scopes[scope()] : !!D.bb.scopes[scope()]; }
+  function curSeason() { return !D.bb ? '' : state.srv === 'all' ? D.bb.network_season : ((D.bb.servers[state.srv] || {}).season_id); }
+  function isArchive() { return state.period === 'archive'; }
+  function pastEntry() { var id = state.period.indexOf('past-') === 0 ? state.period.slice(5) : null; return id && D.bb ? D.bb.past_seasons.filter(function (p) { return p.season_id === id; })[0] : null; }
+  function periodName() { var p = pastEntry(); return isArchive() ? 'Before BlackBox' : state.period === 'all_time' ? 'All-time' : p ? seasonName(p.season_id) + ' (ended)' : seasonName(curSeason()); }
+  function hasScope() { if (!D.bb) return false; var p = pastEntry(); return p ? !!p.scopes[scope()] : !!D.bb.scopes[scope()]; }
   function summary() { var p = pastEntry(); return p ? p.scopes[scope()] : (D.bb.scopes[scope()] || {})[state.period]; }
   function boardsFile() {
     var key = scope() + '-' + state.period;
@@ -240,36 +240,76 @@
     return D.cache[key];
   }
   function srvName(id) { var s = srvById(id); return s ? s.map : id; }
+  function scopeLabel(short) { return state.srv === 'all' ? 'All servers' : short ? srvById(state.srv).map : srvById(state.srv).name; }
   function periodItems() {
-    var items = [{ id: 'all_time', label: 'All-time' }, { id: 'season', label: seasonName(curSeason()) }];
-    D.bb.past_seasons.forEach(function (p) { items.push({ id: 'past-' + p.season_id, label: seasonName(p.season_id) }); });
+    var items = [];
+    if (D.bb) {
+      items.push({ id: 'all_time', label: 'All-time' }, { id: 'season', label: seasonName(curSeason()) });
+      D.bb.past_seasons.forEach(function (p) { items.push({ id: 'past-' + p.season_id, label: seasonName(p.season_id) }); });
+    }
+    if (D.arch) items.push({ id: 'archive', label: 'Before BlackBox' });
     return items;
   }
 
-  /* All-time "Hours played" comes from CFTools for now: it includes playtime from before BlackBox
-     started counting. Set CF_PLAYTIME to false once BlackBox has caught up. */
-  var CF_PLAYTIME = true;
-  function cfPlaytimeRows() {
-    if (!CF_PLAYTIME || state.period !== 'all_time' || !D.lb) return null;
-    var rows = state.srv === 'all' ? (D.lb.combined || {}).playtime : ((D.lb.servers || {})[state.srv] || {}).playtime;
-    return rows && rows.length ? rows : null;
+  /* =================== archived CFTools records (frozen; see data/archive/cftools.json) =================== */
+  function archDate() { return D.arch ? new Date(D.arch.frozen_at).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : ''; }
+  function archRows(cat) { return ((state.srv === 'all' ? D.arch.combined : (D.arch.servers[state.srv] || {})) || {})[cat] || []; }
+  function archPlayer(name) {
+    if (!D.arch || !name) return null;
+    var n = name.toLowerCase();
+    return D.arch.players.filter(function (x) { return (x.name || '').toLowerCase() === n; })[0] || null;
   }
-  function cfHoursFor(name) {
-    if (!CF_PLAYTIME || !D.players || !name) return 0;
-    var n = name.toLowerCase(), p = D.players.players.filter(function (x) { return (x.name || '').toLowerCase() === n; })[0];
-    if (!p) return 0;
-    return Object.keys(p.servers || {}).filter(function (id) { return state.srv === 'all' || id === state.srv; })
-      .reduce(function (a, id) { return a + (p.servers[id].playtime || 0); }, 0);
+  function archTotals(p) {
+    var t = { playtime: 0, deaths: 0, servers: 0 };
+    Object.keys(p.servers || {}).forEach(function (id) {
+      if (state.srv !== 'all' && id !== state.srv) return;
+      t.playtime += p.servers[id].playtime || 0; t.deaths += p.servers[id].deaths || 0; t.servers++;
+    });
+    return t;
   }
 
   /* =================== leaderboard =================== */
-  function renderBoard() { if (D.bb) bbBoard(); else cfBoard(); }
+  function renderBoard() {
+    var items = periodItems(), pc = document.getElementById('period-chips');
+    var table = document.getElementById('lb-table'), more = document.getElementById('lb-more'), note = document.getElementById('lb-note');
+    if (!items.length) {
+      document.getElementById('lb-label').textContent = 'Leaderboard';
+      document.getElementById('group-chips').hidden = document.getElementById('cat-chips').hidden = pc.hidden = note.hidden = more.hidden = true;
+      table.innerHTML = '<tbody><tr><td><div class="empty">Leaderboards appear here once the stats feed is connected</div></td></tr></tbody>';
+      return;
+    }
+    if (!items.some(function (p) { return p.id === state.period; })) state.period = items[0].id;
+    pc.hidden = false;
+    chips(pc, items, state.period, function (id) { state.period = id; state.more = false; renderBoard(); renderDeaths(); renderRecords(); });
+    if (isArchive()) archiveBoard(); else bbBoard();
+  }
+
+  function archiveBoard() {
+    document.getElementById('group-chips').hidden = true;
+    var cc = document.getElementById('cat-chips'); cc.hidden = false;
+    if (!CATS.some(function (c) { return c.id === state.cat; })) state.cat = 'playtime';
+    chips(cc, CATS, state.cat, function (id) { state.cat = id; state.more = false; renderBoard(); });
+    var cat = CATS.filter(function (c) { return c.id === state.cat; })[0];
+    document.getElementById('lb-label').textContent = 'Leaderboard · ' + scopeLabel() + ' · Before BlackBox';
+    var note = document.getElementById('lb-note');
+    note.textContent = 'Archived CFTools records up to ' + archDate() + ', from before MM BlackBox started counting. These are frozen and no longer change.';
+    note.hidden = false;
+    var table = document.getElementById('lb-table'), more = document.getElementById('lb-more');
+    table.setAttribute('data-want', '');
+    var head = '<thead><tr><th style="width:64px">Rank</th><th>Player</th><th class="r">' + esc(cat.unit) + '</th></tr></thead>';
+    var rows = archRows(cat.id);
+    if (!rows.length) { table.innerHTML = head + '<tbody><tr><td colspan="3"><div class="empty">No archived records for this server</div></td></tr></tbody>'; more.hidden = true; return; }
+    table.innerHTML = head + '<tbody>' + rows.slice(0, state.more ? 50 : 25).map(function (r, i) {
+      var cls = i === 0 ? 'top1' : i < 3 ? 'top3' : '';
+      return '<tr><td><span class="rank ' + cls + '">' + String(i + 1).padStart(2, '0') + '</span></td><td>' + esc(r.name) + '</td><td class="r mono" style="color:var(--silver)">' + cat.fmt(r.value) + '</td></tr>';
+    }).join('') + '</tbody>';
+    more.hidden = rows.length <= 25;
+    more.textContent = state.more ? 'Show top 25' : 'Show top ' + Math.min(50, rows.length);
+  }
 
   function bbBoard() {
-    if (!periodItems().some(function (p) { return p.id === state.period; })) state.period = 'all_time';
-    var pc = document.getElementById('period-chips'), gc = document.getElementById('group-chips');
-    pc.hidden = gc.hidden = false;
-    chips(pc, periodItems(), state.period, function (id) { state.period = id; state.more = false; renderBoard(); renderDeaths(); renderRecords(); });
+    var gc = document.getElementById('group-chips');
+    gc.hidden = false;
     chips(gc, GROUPS, state.group, function (id) { state.group = id; state.board = GROUPS.filter(function (g) { return g.id === id; })[0].boards[0]; state.more = false; renderBoard(); });
     var grp = GROUPS.filter(function (g) { return g.id === state.group; })[0];
     var cc = document.getElementById('cat-chips');
@@ -277,7 +317,7 @@
     chips(cc, grp.boards.map(function (b) { return { id: b, label: BB[b].label }; }), state.board, function (id) { state.board = id; state.more = false; renderBoard(); });
 
     var b = BB[state.board], extraCol = b.extra && !(state.board === 'alive' && state.srv !== 'all');
-    document.getElementById('lb-label').textContent = 'Leaderboard · ' + (state.srv === 'all' ? 'All servers' : srvById(state.srv).name) + ' · ' + periodName();
+    document.getElementById('lb-label').textContent = 'Leaderboard · ' + scopeLabel() + ' · ' + periodName();
     var note = document.getElementById('lb-note');
     var noteText = (b.note || '') + (b.min ? (b.note ? ' ' : '') + 'Needs at least ' + D.bb.min_kills_for_ratios + ' AI kills.' : '');
     note.textContent = noteText; note.hidden = !noteText;
@@ -285,20 +325,6 @@
     var head = '<thead><tr><th style="width:64px">Rank</th><th>Player</th>' + (extraCol ? '<th>' + esc(b.extra) + '</th>' : '') + '<th class="r">' + esc(b.unit) + '</th></tr></thead>';
     var cols = extraCol ? 4 : 3;
     var empty = function (msg) { table.innerHTML = head + '<tbody><tr><td colspan="' + cols + '"><div class="empty">' + msg + '</div></td></tr></tbody>'; more.hidden = true; };
-    var cfRows = state.board === 'playtime' ? cfPlaytimeRows() : null;
-    if (cfRows) {
-      note.textContent = 'All-time hours come from our CFTools server records, so they include time played before BlackBox started counting.';
-      note.hidden = false;
-      var showCf = cfRows.slice(0, state.more ? 50 : 25);
-      table.setAttribute('data-want', '');
-      table.innerHTML = head + '<tbody>' + showCf.map(function (r, i) {
-        var cls = i === 0 ? 'top1' : i < 3 ? 'top3' : '';
-        return '<tr><td><span class="rank ' + cls + '">' + String(i + 1).padStart(2, '0') + '</span></td><td>' + esc(r.name) + '</td><td class="r mono" style="color:var(--silver)">' + hours(r.value) + '</td></tr>';
-      }).join('') + '</tbody>';
-      more.hidden = cfRows.length <= 25;
-      more.textContent = state.more ? 'Show top 25' : 'Show top ' + Math.min(50, cfRows.length);
-      return;
-    }
     if (!hasScope()) return empty(pastEntry() ? 'This server wasn’t part of that season' : 'No BlackBox stats from this server yet');
     var want = state.board + scope() + state.period;
     table.setAttribute('data-want', want);
@@ -321,35 +347,16 @@
     }).catch(function () { empty('This board couldn’t be loaded'); });
   }
 
-  function cfBoard() {
-    var cat = CATS.filter(function (c) { return c.id === state.cat; })[0];
-    var all = state.srv === 'all';
-    document.getElementById('lb-label').textContent = 'Leaderboard · ' + (all ? 'All servers' : srvById(state.srv).name);
-    var rows = [];
-    if (D.lb) rows = (all ? (D.lb.combined || {})[cat.id] : ((D.lb.servers || {})[state.srv] || {})[cat.id]) || [];
-    var table = document.getElementById('lb-table');
-    var head = '<thead><tr><th style="width:64px">Rank</th><th>Player</th><th class="r">' + esc(cat.unit) + '</th></tr></thead>';
-    chips(document.getElementById('cat-chips'), CATS, state.cat, function (id) { state.cat = id; renderBoard(); });
-    if (!rows.length) {
-      table.innerHTML = head + '<tbody><tr><td colspan="3"><div class="empty">' + (D.lb ? 'No entries for this board yet' : 'Leaderboards appear here once the stats feed is connected') + '</div></td></tr></tbody>';
-      return;
-    }
-    table.innerHTML = head + '<tbody>' + rows.slice(0, 25).map(function (p, i) {
-      var cls = i === 0 ? 'top1' : i < 3 ? 'top3' : '';
-      return '<tr><td><span class="rank ' + cls + '">' + String(i + 1).padStart(2, '0') + '</span></td><td>' + esc(p.name) + '</td><td class="r mono" style="color:var(--silver)">' + cat.fmt(p.value) + '</td></tr>';
-    }).join('') + '</tbody>';
-  }
-
   /* =================== causes of death (one series, horizontal bars) =================== */
   function renderDeaths() {
     var sec = document.getElementById('deaths-section'), spacer = document.getElementById('deaths-spacer');
-    var sum = D.bb && hasScope() ? summary() : null;
+    var sum = D.bb && !isArchive() && hasScope() ? summary() : null;
     var by = sum && sum.deaths_by, keys = by ? Object.keys(DEATHS).filter(function (k) { return by[k] > 0; }) : [];
     sec.hidden = !keys.length; spacer.hidden = !!keys.length;
     if (!keys.length) return;
     keys.sort(function (a, b) { return by[b] - by[a]; });
     var total = keys.reduce(function (a, k) { return a + by[k]; }, 0), top = by[keys[0]];
-    document.getElementById('deaths-label').textContent = 'Causes of death · ' + (state.srv === 'all' ? 'All servers' : srvById(state.srv).name) + ' · ' + periodName() + ' · ' + num(total) + ' deaths';
+    document.getElementById('deaths-label').textContent = 'Causes of death · ' + scopeLabel() + ' · ' + periodName() + ' · ' + num(total) + ' deaths';
     document.getElementById('deaths-chart').innerHTML = keys.map(function (k) {
       var share = by[k] / total * 100, w = Math.max(0.6, by[k] / top * 100);
       var tip = DEATHS[k] + ': ' + num(by[k]) + ' deaths (' + share.toFixed(1) + '%)';
@@ -360,36 +367,45 @@
   }
 
   /* =================== player lookup =================== */
+  function pickList(items) {
+    return '<div class="stack" style="gap:8px;padding-top:8px"><span class="hud">Pick a player</span>' + items.map(function (it) {
+      return '<button type="button" class="chip" ' + it.attr + ' style="justify-content:flex-start;text-transform:none;letter-spacing:0;font-size:14px">' + esc(it.name) + '</button>';
+    }).join('') + '</div>';
+  }
+  function rank(a, b, q) { return (b.toLowerCase() === q) - (a.toLowerCase() === q) || (a.toLowerCase().indexOf(q) - b.toLowerCase().indexOf(q)); }
   function lookup(q) {
     var out = document.getElementById('lookup-out');
     q = (q || '').trim().toLowerCase();
     if (!q) return;
-    if (D.bbIdx) {
-      var hits = D.bbIdx.filter(function (p) { return p[1].toLowerCase().indexOf(q) !== -1; });
-      hits.sort(function (a, b) { return (b[1].toLowerCase() === q) - (a[1].toLowerCase() === q) || (a[1].toLowerCase().indexOf(q) - b[1].toLowerCase().indexOf(q)); });
-      hits = hits.slice(0, 8);
-      if (!hits.length) { out.innerHTML = '<p class="small">No match for “' + esc(q) + '”. New players appear after 10 minutes of play and the next stats update.</p>'; return; }
-      if (hits.length > 1 && hits[0][1].toLowerCase() !== q) {
-        out.innerHTML = '<div class="stack" style="gap:8px;padding-top:8px"><span class="hud">Pick a player</span>' + hits.map(function (p) {
-          return '<button type="button" class="chip" data-pid="' + esc(p[0]) + '" style="justify-content:flex-start;text-transform:none;letter-spacing:0;font-size:14px">' + esc(p[1]) + '</button>';
-        }).join('') + '</div>';
-        return;
-      }
+    if (!D.bbIdx && !D.arch) { out.innerHTML = '<p class="empty">Player lookup goes live once the stats feed is connected</p>'; return; }
+    var hits = (D.bbIdx || []).filter(function (p) { return p[1].toLowerCase().indexOf(q) !== -1; })
+      .sort(function (a, b) { return rank(a[1], b[1], q); }).slice(0, 8);
+    if (hits.length) {
+      if (hits.length > 1 && hits[0][1].toLowerCase() !== q) { out.innerHTML = pickList(hits.map(function (p) { return { name: p[1], attr: 'data-pid="' + esc(p[0]) + '"' }; })); return; }
       return bbProfile(hits[0][0]);
     }
-    if (!D.players) { out.innerHTML = '<p class="empty">Player lookup goes live once the stats feed is connected</p>'; return; }
-    var cf = D.players.players.filter(function (p) {
-      return (p.name || '').toLowerCase().indexOf(q) !== -1 || (p.names || []).some(function (n) { return n.toLowerCase().indexOf(q) !== -1; });
-    }).slice(0, 8);
-    if (!cf.length) { out.innerHTML = '<p class="small">No match for “' + esc(q) + '”. Lookup covers players who appear on at least one top-100 board.</p>'; return; }
-    if (cf.length > 1 && cf[0].name.toLowerCase() !== q) {
-      out.innerHTML = '<div class="stack" style="gap:8px;padding-top:8px"><span class="hud">Pick a player</span>' + cf.map(function (p, i) {
-        return '<button type="button" class="chip" data-pick="' + i + '" style="justify-content:flex-start">' + esc(p.name) + '</button>';
-      }).join('') + '</div>';
-      out.onclick = function (e) { var b = e.target.closest('[data-pick]'); if (b) cfProfile(cf[+b.getAttribute('data-pick')]); };
-      return;
-    }
-    cfProfile(cf[0]);
+    // not on the BlackBox boards yet: try the archived CFTools records
+    var old = D.arch ? D.arch.players.filter(function (p) { return (p.name || '').toLowerCase().indexOf(q) !== -1; })
+      .sort(function (a, b) { return rank(a.name, b.name, q); }).slice(0, 8) : [];
+    if (!old.length) { out.innerHTML = '<p class="small">No match for “' + esc(q) + '”. New players appear after 10 minutes of play and the next stats update.</p>'; return; }
+    if (old.length > 1 && old[0].name.toLowerCase() !== q) { out.innerHTML = pickList(old.map(function (p) { return { name: p.name, attr: 'data-arch="' + esc(p.name) + '"' }; })); return; }
+    archProfile(old[0]);
+  }
+
+  function tileGrid(tiles) {
+    return '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' + tiles.map(function (t) {
+      return '<div style="padding:12px 14px;background:var(--bg);border:1px solid var(--line)" class="stack"><span class="hud" style="font-size:10px">' + t[0] + '</span><span class="statnum" style="font-size:22px">' + t[1] + '</span>' +
+        (t[2] ? '<span class="mono" style="font-size:12px;color:var(--muted);overflow-wrap:anywhere">' + esc(t[2]) + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function archProfile(p) {
+    var t = archTotals(p);
+    document.getElementById('lookup-out').innerHTML = '<div class="stack" style="gap:14px;padding-top:14px;border-top:1px solid var(--line)">' +
+      '<div class="stack" style="gap:4px"><span class="h4" style="font-size:22px;font-weight:700;overflow-wrap:anywhere">' + esc(p.name) + '</span>' +
+      '<span class="hud" style="font-size:11px">' + esc(scopeLabel()) + ' · before BlackBox</span></div>' +
+      tileGrid([['Hours played', hours(t.playtime)], ['Deaths', num(t.deaths)]]) +
+      '<p class="small">From our archived CFTools records (up to ' + esc(archDate()) + '). No MM BlackBox stats for this name yet.</p></div>';
   }
 
   var shardCache = {};
@@ -413,7 +429,7 @@
       var travel = s.travel_m.foot + s.travel_m.land + s.travel_m.air + s.travel_m.boat;
       var minK = D.bb.min_kills_for_ratios;
       var tiles = [
-        ['Hours played', hours(per === 'all_time' ? Math.max(s.playtime_s, cfHoursFor(p.name)) : s.playtime_s)], ['AI kills', num(s.ai_kills)],
+        ['Hours played', hours(s.playtime_s)], ['AI kills', num(s.ai_kills)],
         ['Deaths', num(s.deaths)], ['AI kills per death', s.ai_kills >= minK ? ratio(s.ai_kills / Math.max(1, s.deaths)) : '—'],
         ['Headshot %', s.ai_kills >= minK ? pct(s.ai_headshots / s.ai_kills * 100) : '—'], ['Kill streak', num(s.best_kill_streak)],
         ['Longest AI kill', metres(s.longest_ai_kill_m), s.longest_ai_kill_weapon], ['Longest shot', metres(s.longest_hit_m), s.longest_hit_weapon],
@@ -421,38 +437,19 @@
         ['Distance travelled', dist(travel)], ['Infected kills', num(s.infected_kills)],
         ['Animals hunted', num(s.animal_kills)], ['Base parts built', num(s.parts_built)]
       ];
+      var old = per === 'all_time' ? archPlayer(p.name) : null, oldT = old ? archTotals(old) : null;
       var ranks = [];
       if (!single && p.ranks && p.ranks[per]) {
         Object.keys(p.ranks[per]).forEach(function (b) { if (BB[b] && b !== 'deaths') ranks.push({ b: b, r: p.ranks[per][b] }); });
         ranks.sort(function (a, b) { return a.r - b.r; });
       }
       var causes = Object.keys(DEATHS).filter(function (k) { return s.deaths_by[k] > 0; }).sort(function (a, b) { return s.deaths_by[b] - s.deaths_by[a]; }).slice(0, 3);
-      out.innerHTML = '<div class="stack" style="gap:14px;padding-top:14px;border-top:1px solid var(--line)">' + head +
-        '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' + tiles.map(function (t) {
-          return '<div style="padding:12px 14px;background:var(--bg);border:1px solid var(--line)" class="stack"><span class="hud" style="font-size:10px">' + t[0] + '</span><span class="statnum" style="font-size:22px">' + t[1] + '</span>' +
-            (t[2] ? '<span class="mono" style="font-size:12px;color:var(--muted);overflow-wrap:anywhere">' + esc(t[2]) + '</span>' : '') + '</div>';
-        }).join('') + '</div>' +
+      out.innerHTML = '<div class="stack" style="gap:14px;padding-top:14px;border-top:1px solid var(--line)">' + head + tileGrid(tiles) +
         (ranks.length ? '<div class="tags">' + ranks.slice(0, 5).map(function (x) { return '<span class="tag tag-o">#' + x.r + ' ' + esc(BB[x.b].label) + '</span>'; }).join('') + '</div>' : '') +
         (causes.length ? '<p class="small">Most often killed by: ' + causes.map(function (k) { return esc(DEATHS[k].toLowerCase()) + ' (' + num(s.deaths_by[k]) + ')'; }).join(', ') + '</p>' : '') +
+        (oldT && oldT.playtime ? '<p class="small">Before BlackBox (archived CFTools records): ' + hours(oldT.playtime) + ' played, ' + num(oldT.deaths) + ' deaths.</p>' : '') +
         '</div>';
     }).catch(function () { out.innerHTML = '<p class="small">That record couldn’t be loaded. Try again after the next update.</p>'; });
-  }
-
-  function cfProfile(p) {
-    var out = document.getElementById('lookup-out');
-    var ids = Object.keys(p.servers || {});
-    var pick = state.srv !== 'all' && p.servers[state.srv] ? [state.srv] : ids;
-    var tot = { deaths: 0, playtime: 0 };
-    pick.forEach(function (id) { var s = p.servers[id]; tot.deaths += s.deaths || 0; tot.playtime += s.playtime || 0; });
-    var bestRank = null;
-    pick.forEach(function (id) { var r = ((p.ranks || {})[id] || {}).playtime; if (r && (!bestRank || r < bestRank)) bestRank = r; });
-    var tiles = [['Hours played', hours(tot.playtime)], ['Deaths', num(tot.deaths)], ['Servers played', String(pick.length)], ['Best playtime rank', bestRank ? '#' + bestRank : '—']];
-    out.innerHTML = '<div class="stack" style="gap:14px;padding-top:14px;border-top:1px solid var(--line)">' +
-      '<div class="stack" style="gap:4px"><span class="h4" style="font-size:22px;font-weight:700;overflow-wrap:anywhere">' + esc(p.name) + '</span>' +
-      '<span class="hud" style="font-size:11px">' + (pick.length > 1 ? 'All servers' : esc((srvById(pick[0]) || {}).name || pick[0])) + '</span></div>' +
-      '<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' + tiles.map(function (t) {
-        return '<div style="padding:14px;background:var(--bg);border:1px solid var(--line)" class="stack"><span class="hud" style="font-size:10px">' + t[0] + '</span><span class="statnum" style="font-size:24px">' + t[1] + '</span></div>';
-      }).join('') + '</div></div>';
   }
 
   /* =================== records =================== */
@@ -470,31 +467,29 @@
   function renderRecords() {
     var peak = peakPop(), box = document.getElementById('records');
     var peakCard = card('Peak population', peak && peak.v, peak && (srvName(peak.id) + ' · ' + new Date(peak.t * 1000).toLocaleDateString()));
-    if (D.bb) {
-      document.getElementById('records-label').textContent = '// Hall of fame · ' + (state.srv === 'all' ? 'All servers' : srvById(state.srv).map) + ' · ' + periodName();
-      var sm = hasScope() ? summary() : null, rec = (sm && sm.records) || {};
-      var r = function (k, fmt, withExtra) { var x = rec[k]; return x ? [fmt(x[2]), x[1] + (withExtra && x[3] ? ' · ' + x[3] : '')] : [null, null]; };
-      var cards = [
-        ['Most hours played'].concat(cfPlaytimeRows() ? [hours(cfPlaytimeRows()[0].value), cfPlaytimeRows()[0].name] : r('playtime', hours)), ['Most AI kills'].concat(r('ai_kills', num)),
-        ['Longest AI kill'].concat(r('longest_ai_kill', metres, true)), ['Best kill streak'].concat(r('best_kill_streak', num)),
-        ['Longest life'].concat(r('longest_life', dur)), ['Furthest travelled'].concat(r('travel', dist))
-      ];
-      var totals = [
-        card('AI killed', sm ? num(sm.ai_kills) : null, sm ? 'By ' + num(sm.players) + ' mercs on the boards' : null),
-        card('Distance covered', sm ? dist(sm.travel_m) : null, sm ? num(sm.infected_kills) + ' infected put down on the way' : null)
-      ];
-      if (!pastEntry()) totals.push(peakCard); // population history isn't kept per season
-      box.innerHTML = cards.map(function (c) { return card(c[0], c[1], c[2]); }).join('') + totals.join('');
+    document.getElementById('records-label').textContent = '// Hall of fame · ' + scopeLabel(true) + ' · ' + periodName();
+    if (isArchive()) {
+      var h = archRows('playtime')[0], d = archRows('deaths')[0];
+      box.innerHTML = [
+        card('Most hours played', h && hours(h.value), h && h.name),
+        card('Most deaths', d && num(d.value), d && d.name),
+        card('Players in the archive', num(D.arch.players.filter(function (p) { return archTotals(p).servers > 0; }).length), 'CFTools records up to ' + archDate())
+      ].join('');
       return;
     }
-    var c = (D.lb && D.lb.combined) || {};
-    var top = function (k) { return (c[k] || [])[0]; };
-    box.innerHTML = [
-      card('Most hours played', top('playtime') && hours(top('playtime').value), top('playtime') && top('playtime').name),
-      card('Most deaths', top('deaths') && num(top('deaths').value), top('deaths') && top('deaths').name),
-      card('Players on the boards', D.players ? num(D.players.players.length) : null, D.players ? 'Across all MM servers' : null),
-      peakCard
-    ].join('');
+    var sm = hasScope() ? summary() : null, rec = (sm && sm.records) || {};
+    var r = function (k, fmt, withExtra) { var x = rec[k]; return x ? [fmt(x[2]), x[1] + (withExtra && x[3] ? ' · ' + x[3] : '')] : [null, null]; };
+    var cards = [
+      ['Most hours played'].concat(r('playtime', hours)), ['Most AI kills'].concat(r('ai_kills', num)),
+      ['Longest AI kill'].concat(r('longest_ai_kill', metres, true)), ['Best kill streak'].concat(r('best_kill_streak', num)),
+      ['Longest life'].concat(r('longest_life', dur)), ['Furthest travelled'].concat(r('travel', dist))
+    ];
+    var totals = [
+      card('AI killed', sm ? num(sm.ai_kills) : null, sm ? 'By ' + num(sm.players) + ' mercs on the boards' : null),
+      card('Distance covered', sm ? dist(sm.travel_m) : null, sm ? num(sm.infected_kills) + ' infected put down on the way' : null)
+    ];
+    if (!pastEntry()) totals.push(peakCard); // population history isn't kept per season
+    box.innerHTML = cards.map(function (c) { return card(c[0], c[1], c[2]); }).join('') + totals.join('');
   }
 
   /* =================== wiring =================== */
@@ -518,20 +513,18 @@
       getJSON('data/servers.json'),
       opt(getJSON('data/live/status.json')),
       opt(getJSON('data/live/history.json')),
-      opt(getJSON('data/live/leaderboards.json')),
-      opt(getJSON('data/live/players.json')),
+      opt(getJSON('data/archive/cftools.json')),
       opt(getJSON('data/live/bb/meta.json')),
       opt(getJSON('data/live/bb/index.json'))
     ]).then(function (r) {
-      D.cfg = r[0]; D.status = r[1]; D.history = r[2]; D.lb = r[3]; D.players = r[4];
-      if (r[5] && r[5].scopes) { D.bb = r[5]; D.bbIdx = r[6] || []; }
+      D.cfg = r[0]; D.status = r[1]; D.history = r[2]; D.arch = r[3] && r[3].players ? r[3] : null;
+      if (r[4] && r[4].scopes) { D.bb = r[4]; D.bbIdx = r[5] || []; }
       if (!srvById(state.srv)) state.srv = 'all';
-      var gen = (D.status && D.status.generated_at) || (D.lb && D.lb.generated_at);
+      var gen = (D.status && D.status.generated_at) || (D.bb && D.bb.generated_at);
       document.getElementById('updated').textContent = gen ? 'Updated ' + new Date(gen).toLocaleString() : 'Stats feed not connected yet';
-      if (D.bb) {
-        document.getElementById('lookup-hint').textContent = 'Shows your hours played, AI kills, longest shot, distance travelled and where you rank.';
-        document.getElementById('about-data').textContent = 'Player stats are recorded by MM BlackBox on each server and refreshed about every 30 minutes. All servers adds your stats from every map together. Season boards restart at each wipe; all-time boards keep going. Players with under 10 minutes played and staff aren’t listed. Want your name hidden? Ask any staff member.';
-      }
+      document.getElementById('lookup-hint').textContent = 'Shows your hours played, AI kills, longest shot, distance travelled and where you rank.';
+      document.getElementById('about-data').textContent = 'Player stats are recorded by MM BlackBox on each server and refreshed about every 30 minutes. All servers adds your stats from every map together. Season boards restart at each wipe; all-time boards keep going. Players with under 10 minutes played and staff aren’t listed.' +
+        (D.arch ? ' “Before BlackBox” keeps our older CFTools records (hours played and deaths) up to ' + archDate() + '.' : '') + ' Want your name hidden? Ask any staff member.';
       renderAll();
       var q = params.get('player');
       if (q) { document.getElementById('lookup').value = q; lookup(q); }
@@ -552,6 +545,8 @@
         }
         return;
       }
+      var ar = e.target.closest('[data-arch]');
+      if (ar && D.arch) { var ap = archPlayer(ar.getAttribute('data-arch')); if (ap) archProfile(ap); return; }
       var lp = e.target.closest('[data-look-period]');
       if (lp && state.look) bbProfile(state.look.id, lp.getAttribute('data-look-period'));
     });

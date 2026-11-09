@@ -9,17 +9,17 @@
    2. Live status: asks each server directly over the Steam query protocol
       (needs "query_port" set). If that fails and CFTools is set up, it falls
       back to counting players from CFTools.
-   3. Leaderboards + player lookup: pulls the top 100 per stat from the
-      CFTools Data API (needs "cftools_server_api_id" set, plus the
-      CFTOOLS_APP_ID and CFTOOLS_SECRET repository secrets).
-   4. Writes site/data/live/status.json, history.json, leaderboards.json, players.json.
-   5. MM BlackBox player stats (AI kills, travel, longest shot …): see scripts/blackbox.mjs.
-      Writes site/data/live/bb/. Runs even if CFTools is down.
+   3. Leaderboards + player lookup: MM BlackBox player stats (AI kills, travel,
+      longest shot …), see scripts/blackbox.mjs. Writes site/data/live/bb/.
+   4. Writes site/data/live/status.json and history.json.
+   CFTools (CFTOOLS_APP_ID / CFTOOLS_SECRET secrets) is now only a backup for the
+   player count when a server doesn't answer the Steam query. The old CFTools
+   leaderboards are archived in site/data/archive/cftools.json.
 
    If something fails, the previous files are kept, so the site never goes blank.
    Run locally with:  node scripts/update-stats.mjs
    ===================================================================== */
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import dgram from 'node:dgram';
 import dns from 'node:dns/promises';
@@ -31,10 +31,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG = process.env.MM_CONFIG || path.join(ROOT, 'site/data/servers.json');
 const LIVE = process.env.MM_LIVE || path.join(ROOT, 'site/data/live');
 const HISTORY_DAYS = 35;                       // how much player-count history to keep
-// MM servers are PvE, so player-kill stats (kills, K/D, longest kill/shot) are not tracked.
-const STATS = ['playtime', 'deaths'];
-const SUM_STATS = ['deaths', 'playtime', 'suicides'];
-const MAX_STATS = [];
 const CF_BASE = process.env.CFTOOLS_BASE || 'https://data.cftools.cloud'; // override only for testing
 const UA = 'MisfitMercenariesSite/1.0 (+https://github.com/meccmax)';
 
@@ -108,15 +104,6 @@ async function cfGet(p) {
   }
   return r.json();
 }
-async function cfLeaderboard(serverApiId, stat) {
-  const q = new URLSearchParams({ stat, order: '-1', limit: '100' }); // order -1 = highest first (1 returns lowest first)
-  const res = await cfGet(`v1/server/${serverApiId}/leaderboard?${q}`);
-  return res.leaderboard || [];
-}
-async function cfLookupSteam(steam64) {
-  const res = await cfGet(`v1/users/lookup?${new URLSearchParams({ identifier: steam64 })}`);
-  return res.cftools_id || null;
-}
 async function cfOnlineCount(serverApiId) {
   const res = await cfGet(`v1/server/${serverApiId}/GSM/list`);
   return (res.sessions || []).length;
@@ -127,7 +114,6 @@ async function main() {
   const cfg = await readJSON(CONFIG, null);
   if (!cfg) throw new Error('site/data/servers.json is missing or invalid');
   const host = cfg.host;
-  const hidden = new Set(((cfg.hidden_players || {}).cftools_ids) || []);
   const servers = cfg.servers || [];
   const wantsQuery = servers.some((s) => s.query_port);
   const wantsCf = servers.some((s) => s.cftools_server_api_id);
@@ -138,7 +124,7 @@ async function main() {
 
   let cfReady = false;
   if (wantsCf) {
-    try { cfReady = await cfAuth(); if (!cfReady) log('CFTOOLS_APP_ID / CFTOOLS_SECRET not set: skipping leaderboards'); }
+    try { cfReady = await cfAuth(); if (!cfReady) log('CFTOOLS_APP_ID / CFTOOLS_SECRET not set: no CFTools backup for player counts'); }
     catch (e) { log(e.message); }
   }
 
@@ -182,59 +168,12 @@ async function main() {
   try { await updateBlackBox({ cfg, servers, live: LIVE, log }); }
   catch (e) { log('BlackBox step failed:', e.message); }
 
-  /* 4. CFTools leaderboards + players */
-  if (!cfReady) return;
-  // turn hidden Steam IDs into CFTools IDs so those players are left off every board
-  for (const sid of (((cfg.hidden_players || {}).steam_ids) || [])) {
-    try { const id = await cfLookupSteam(String(sid).trim()); if (id) hidden.add(id); }
-    catch (e) { log(`hidden player lookup failed for one Steam ID (${e.message})`); }
+  /* 4. CFTools leaderboards are no longer used: the boards come from MM BlackBox, and the old
+        CFTools boards are kept as a frozen archive in site/data/archive/cftools.json.
+        Remove the old live copies so they stop being published. */
+  for (const old of ['leaderboards.json', 'players.json']) {
+    try { await unlink(path.join(LIVE, old)); log('removed old', old); } catch {}
   }
-  log(`hiding ${hidden.size} player(s) from public stats`);
-  const lb = { _comment: 'Top 100 per stat from CFTools. Generated; do not edit by hand.', generated_at: now.toISOString(), stats: STATS, servers: {}, combined: {} };
-  const people = new Map(); // cftools_id -> { name, servers: {srv: stats}, ranks: {srv: {stat: rank}} }
-  let any = false;
-  for (const s of servers) {
-    if (!s.cftools_server_api_id) continue;
-    lb.servers[s.id] = {};
-    for (const stat of STATS) {
-      try {
-        const rows = (await cfLeaderboard(s.cftools_server_api_id, stat)).filter((r) => !hidden.has(r.cftools_id));
-        any = true;
-        lb.servers[s.id][stat] = rows.map((r, i) => ({ rank: i + 1, name: r.latest_name, value: r[stat] ?? 0 }));
-        rows.forEach((r, i) => {
-          const p = people.get(r.cftools_id) || { name: r.latest_name, servers: {}, ranks: {} };
-          p.name = r.latest_name || p.name;
-          p.servers[s.id] = {
-            deaths: r.deaths || 0, suicides: r.suicides || 0, playtime: r.playtime || 0
-          };
-          (p.ranks[s.id] = p.ranks[s.id] || {})[stat] = i + 1;
-          people.set(r.cftools_id, p);
-        });
-      } catch (e) { log(`${s.id} ${stat}: ${e.message}`); }
-    }
-  }
-  if (!any) { log('No leaderboard data received; keeping previous files'); return; }
-
-  // combined board across servers (built from each server's top 100)
-  const combined = [...people.entries()].map(([id, p]) => {
-    const t = { name: p.name };
-    for (const k of SUM_STATS) t[k] = Object.values(p.servers).reduce((a, s) => a + (s[k] || 0), 0);
-    for (const k of MAX_STATS) t[k] = Math.max(0, ...Object.values(p.servers).map((s) => s[k] || 0));
-    return t;
-  });
-  for (const stat of STATS) {
-    lb.combined[stat] = combined
-      .filter((p) => (p[stat] || 0) > 0)
-      .sort((a, b) => b[stat] - a[stat])
-      .slice(0, 100)
-      .map((p, i) => ({ rank: i + 1, name: p.name, value: p[stat] }));
-  }
-  await writeJSON('leaderboards.json', lb);
-  await writeJSON('players.json', {
-    _comment: 'Player lookup index: everyone on at least one top-100 board. Generated; do not edit by hand.',
-    generated_at: now.toISOString(),
-    players: [...people.values()].sort((a, b) => a.name.localeCompare(b.name))
-  });
 }
 
 main().catch((e) => { console.error('[stats] failed:', e.message); process.exitCode = 1; });
