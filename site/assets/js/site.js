@@ -18,7 +18,7 @@
     ['stats', 'Stats', 'stats.html'],
     ['media', 'Media', 'media.html'],
     ['about', 'About', 'about.html'],
-    ['join', 'Join', 'join.html']
+    ['join', 'Rules', 'join.html']
   ];
 
   var LOGO = '<svg aria-hidden="true" width="44" height="44" viewBox="0 0 44 44" fill="none">' +
@@ -76,7 +76,7 @@
       '<nav class="foot-col" aria-label="Footer: site"><span class="hud" style="padding-bottom:8px">Navigate</span>' +
       '<a href="servers.html">Servers</a><a href="stats.html">Stats &amp; leaderboards</a><a href="modding.html">Modding</a><a href="tools.html">Tools</a><a href="media.html">Media</a></nav>' +
       '<nav class="foot-col" aria-label="Footer: community"><span class="hud" style="padding-bottom:8px">Community</span>' +
-      '<a href="about.html">About us</a><a href="join.html">Rules &amp; joining</a><a href="support.html">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
+      '<a href="about.html">About us</a><a href="join.html">Server rules</a><a href="support.html">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
       '<div class="foot-col" style="min-width:260px;gap:10px"><span class="hud" style="padding-bottom:8px">Server nodes</span>' +
       '<div class="ipbox"><span>game.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Main</span></div>' +
       '<div class="ipbox"><span>servers.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Backup</span></div></div>' +
@@ -140,7 +140,7 @@
         var st = live && live.servers && live.servers[s.id];
         var status = st ? (st.online ? '<span class="tag tag-live tag-on">Online · ' + st.players + '/' + (st.max_players || s.slots || '?') + '</span>' : '<span class="tag tag-off">Offline</span>') : '';
         return '<article class="panel brk" style="display:flex;flex-direction:column">' +
-          (s.image ? '<img class="cover" src="' + esc(s.image) + '" alt="' + esc(s.name) + ' screenshot" loading="lazy">' : '<div class="ph cover">' + esc(s.map) + '</div>') +
+          (s.image ? '<img class="cover banner" src="' + esc(s.image) + '" alt="' + esc(s.map) + ' banner" loading="lazy">' : '<div class="ph cover">' + esc(s.map) + '</div>') +
           '<div class="card-body">' +
           '<div class="card-top"><span class="hud-o">' + esc(s.badge || '') + '</span>' + status + '</div>' +
           '<h3 class="h3" style="font-size:30px">' + esc(s.name) + '</h3>' +

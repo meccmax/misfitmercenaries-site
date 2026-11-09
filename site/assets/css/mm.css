@@ -145,6 +145,7 @@ a.panel{color:var(--ink);display:flex;flex-direction:column}
 
 /* ---------- misc components ---------- */
 .ph{display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#121418 0,#121418 10px,#15171C 10px,#15171C 20px);color:var(--muted);font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:12px}
+.cover.banner{aspect-ratio:460/215}
 .cover{aspect-ratio:16/9;border-bottom:1px dashed #3A3F47;object-fit:cover;width:100%;display:block}
 .ipbox{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 14px;background:var(--bg);border:1px solid #2C3037;font-family:var(--font-mono);font-size:14px;color:var(--ink);min-height:48px}
 .ipbox span{overflow-wrap:anywhere}
