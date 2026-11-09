@@ -46,12 +46,16 @@
   </div>
 </section>
 
-<section class="wrap" style="padding-top:32px;padding-bottom:64px">
+<section class="wrap" style="padding-top:32px">
   <div class="split" style="align-items:flex-start;gap:20px">
-    <div class="grow panel brk pad stack" style="gap:20px">
+    <div class="grow panel brk pad stack" style="gap:18px">
       <div class="stack" style="gap:6px"><span class="hud-o" id="lb-label">Leaderboard</span><h2 class="h3" style="font-size:28px">Top mercenaries</h2></div>
+      <div class="row" role="group" aria-label="Time period" id="period-chips" style="gap:8px" hidden></div>
+      <div class="row" role="group" aria-label="Leaderboard group" id="group-chips" style="gap:8px" hidden></div>
       <div class="row" role="group" aria-label="Leaderboard category" id="cat-chips" style="gap:8px"></div>
+      <p class="hud" id="lb-note" style="font-size:11px" hidden></p>
       <div class="tbl-wrap"><table class="tbl" id="lb-table" style="min-width:0"></table></div>
+      <button type="button" class="btn btn-g btn-sm" id="lb-more" style="align-self:flex-start" hidden>Show top 50</button>
     </div>
     <div class="side stack" style="gap:20px">
       <div class="panel brk pad stack">
@@ -62,19 +66,27 @@
           <input id="lookup" class="input" type="search" placeholder="Type your in-game name" autocomplete="off">
           <button type="submit" class="btn btn-p">Search records</button>
         </form>
-        <div id="lookup-out" aria-live="polite"><p class="small">Shows your hours played, deaths and your rank on each board.</p></div>
+        <div id="lookup-out" aria-live="polite"><p class="small" id="lookup-hint">Shows your hours played, deaths and your rank on each board.</p></div>
       </div>
       <div class="panel pad stack" style="gap:10px">
         <span class="hud">About this data</span>
-        <p class="body" style="font-size:15px">Pulled from our CFTools server records and refreshed about every 30 minutes. Leaderboards list each server's top 100 per category. Want your name hidden from public boards? Ask any staff member.</p>
+        <p class="body" style="font-size:15px" id="about-data">Pulled from our CFTools server records and refreshed about every 30 minutes. Leaderboards list each server's top 100 per category. Want your name hidden from public boards? Ask any staff member.</p>
       </div>
     </div>
   </div>
 </section>
 
+<section class="wrap" style="padding-top:32px;padding-bottom:64px" id="deaths-section" hidden>
+  <div class="panel pad stack" style="gap:20px">
+    <div class="stack" style="gap:6px"><span class="hud-o" id="deaths-label">Causes of death</span><h2 class="h3" style="font-size:28px">How mercs die</h2></div>
+    <div id="deaths-chart" class="stack" style="gap:10px"></div>
+  </div>
+</section>
+<div id="deaths-spacer" style="height:64px"></div>
+
 <section class="band">
   <div class="wrap section stack-lg">
-    <div class="stack" style="gap:12px"><div class="hud-o">// Hall of fame</div><h2 class="h2">Server records</h2></div>
+    <div class="stack" style="gap:12px"><div class="hud-o" id="records-label">// Hall of fame</div><h2 class="h2">Server records</h2></div>
     <div id="records" class="grid g-240" style="gap:16px"></div>
   </div>
 </section>

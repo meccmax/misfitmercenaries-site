@@ -46,6 +46,8 @@ jobs:
         env:
           CFTOOLS_APP_ID: ${{ secrets.CFTOOLS_APP_ID }}
           CFTOOLS_SECRET: ${{ secrets.CFTOOLS_SECRET }}
+          # Optional: password the server agent asks for before handing over the BlackBox stats files
+          BLACKBOX_TOKEN: ${{ secrets.BLACKBOX_TOKEN }}
         run: node scripts/update-stats.mjs
 
       - name: Save stats
@@ -60,6 +62,8 @@ jobs:
           git commit -q -m "Stats update $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" stats-data
           rm -rf .git
+          # The raw BlackBox copies are only kept for the next run; the site uses the combined files in bb/
+          rm -rf bb-raw
 
       - uses: actions/setup-python@v5
         with:

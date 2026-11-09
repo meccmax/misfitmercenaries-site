@@ -141,10 +141,15 @@
 </main>
 <div id="site-footer"></div>
 <script>
-/* Home "Top mercs" preview: top 3 players by hours played across all servers, if the stats feed has run. */
+/* Home "Top mercs" preview: top 3 players by hours played across all servers.
+   Uses the MM BlackBox boards when they exist, otherwise the CFTools boards. */
 document.addEventListener('DOMContentLoaded', function () {
-  fetch('data/live/leaderboards.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (lb) {
-    var rows = (lb.combined && lb.combined.playtime) || [];
+  var get = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }); };
+  get('data/live/bb/boards-network-all_time.json').then(function (b) {
+    return (b.playtime || []).map(function (r) { return { name: r[1], value: r[2] }; });
+  }).catch(function () {
+    return get('data/live/leaderboards.json').then(function (lb) { return (lb.combined && lb.combined.playtime) || []; });
+  }).then(function (rows) {
     if (!rows.length) return;
     var esc = window.MM.esc;
     document.getElementById('home-top').innerHTML = rows.slice(0, 3).map(function (p, i) {

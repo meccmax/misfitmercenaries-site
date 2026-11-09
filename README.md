@@ -85,3 +85,11 @@ Each game has its own folder under `site/media/` (for example `site/media/dayz/`
 - Population history is kept for 35 days.
 - **Hiding a player:** add their Steam64 ID to `hidden_players.steam_ids` (or CFTools ID to `cftools_ids`) in `site/data/servers.json`. They drop off the boards and lookup on the next run.
 - GitHub pauses scheduled workflows in a repo with no activity for 60 days. The stats updates count as activity, but if it ever stops, just click **Run workflow** once.
+
+## MM BlackBox player stats (AI kills, travel, longest shot …)
+- Each DayZ server's MM BlackBox writes `profiles\MM_BlackBox\Stats\public_stats.json` every 5 minutes. Every 30 minutes, `scripts/blackbox.mjs` downloads all three, checks them and builds the boards.
+- **To switch it on:** set `blackbox.url` in `site/data/servers.json` to where the files can be downloaded, with `{server}` and `{file}` in it. If that address needs a password, add it as a repository secret called `BLACKBOX_TOKEN`. Until the URL is set, the Stats page keeps showing the CFTools boards.
+- Once data arrives, the Stats page switches to the BlackBox boards (Survival, Combat, Travel, Building, Deaths). They come as All-time, This season and past seasons, for All servers or one map. The page also gets a causes-of-death chart, hall-of-fame records and a fuller player lookup.
+- **All servers** adds players' stats from every map together (matched by their anonymous id). Longest/best stats take the highest, and "current life" stays per map.
+- If a download fails or a file is half-written, the last good copy is used. When a server's `season_id` changes (a wipe), the old season's final file is saved and shown under its season name.
+- Players under 10 minutes and staff are left out by BlackBox itself, so there's nothing to set here. The files never contain Steam IDs or IPs.

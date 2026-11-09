@@ -257,3 +257,16 @@ button.media-tile:hover img{transform:scale(1.03)}
 .lb-btn{min-width:48px;min-height:48px;background:rgba(17,19,23,.9);border:1px solid #3A3F47;color:var(--ink);font-size:28px;line-height:1;cursor:pointer;flex:none}
 .lb-btn:hover{border-color:var(--silver)}
 .lb-close{position:absolute;top:8px;right:8px}
+
+/* ---------- Stats: clickable player names + causes-of-death bars ---------- */
+.plink{background:none;border:0;padding:6px 0;margin:-6px 0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.plink:hover,.plink:focus-visible{color:var(--orange);text-decoration:underline;text-underline-offset:3px}
+.dbar{display:grid;grid-template-columns:minmax(110px,180px) minmax(0,1fr) 120px;gap:14px;align-items:center;min-height:28px}
+.dbar-l{font-size:15px;color:var(--silver)}
+.dbar-t{height:14px;background:#16181C;display:block}
+.dbar-t i{display:block;height:100%;background:var(--orange);border-radius:0 4px 4px 0}
+.dbar:hover .dbar-t i{background:#FF8A47}
+.dbar:hover .dbar-l{color:#fff}
+.dbar-v{font-size:13px;color:var(--ink);text-align:right}
+.dbar-v em{font-style:normal;color:var(--muted);margin-left:6px}
+@media (max-width:640px){.dbar{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}.dbar-t{grid-column:1 / -1;grid-row:2}}

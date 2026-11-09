@@ -13,6 +13,8 @@
       CFTools Data API (needs "cftools_server_api_id" set, plus the
       CFTOOLS_APP_ID and CFTOOLS_SECRET repository secrets).
    4. Writes site/data/live/status.json, history.json, leaderboards.json, players.json.
+   5. MM BlackBox player stats (AI kills, travel, longest shot …): see scripts/blackbox.mjs.
+      Writes site/data/live/bb/. Runs even if CFTools is down.
 
    If something fails, the previous files are kept, so the site never goes blank.
    Run locally with:  node scripts/update-stats.mjs
@@ -23,6 +25,7 @@ import dgram from 'node:dgram';
 import dns from 'node:dns/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { updateBlackBox } from './blackbox.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG = process.env.MM_CONFIG || path.join(ROOT, 'site/data/servers.json');
@@ -175,7 +178,11 @@ async function main() {
   }
   if (Object.keys(status.servers).length) await writeJSON('history.json', history);
 
-  /* 3. leaderboards + players */
+  /* 3. MM BlackBox stats (separate from CFTools; never stops the rest) */
+  try { await updateBlackBox({ cfg, servers, live: LIVE, log }); }
+  catch (e) { log('BlackBox step failed:', e.message); }
+
+  /* 4. CFTools leaderboards + players */
   if (!cfReady) return;
   // turn hidden Steam IDs into CFTools IDs so those players are left off every board
   for (const sid of (((cfg.hidden_players || {}).steam_ids) || [])) {
