@@ -3,3 +3,5 @@
 # any other link shows as a button. Add a title after a | if you want one, e.g.
 # https://www.youtube.com/watch?v=abc123 | Convoy ambush at the docks
 # Lines starting with # are ignored.
+https://youtu.be/PQTKeQoVMQ0 | New World - Dynasty Shipyard Expedition - Healer PoV
+https://youtu.be/5e0XZxq0pok | New World - Lazarus Expedition - Tank PoV
