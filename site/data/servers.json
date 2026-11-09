@@ -52,7 +52,7 @@
         "A6 Weapons"
       ],
       "battlemetrics": null,
-      "image": "assets/img/servers/sakhal-frostline.jpg"
+      "image": "assets/img/servers/sakhal-frostline.png"
     },
     {
       "id": "nasdara",
@@ -78,7 +78,7 @@
         "A6 Weapons"
       ],
       "battlemetrics": null,
-      "image": "assets/img/servers/nasdara-badlands.jpg"
+      "image": "assets/img/servers/nasdara-badlands.png"
     }
   ],
   "hidden_players": {

@@ -71,7 +71,7 @@
       '<footer class="site-footer"><div class="wrap"><div class="foot-cols">' +
       '<div class="stack" style="flex:1 1 320px;max-width:420px">' +
       '<div style="font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink)">Misfit <span class="accent">Mercenaries</span></div>' +
-      '<p>A multi-game community running self-hosted servers since the Ultima Online days. Funded by members, never pay-to-win.</p>' +
+      '<p>A multi-game community running self-hosted servers since the late 1990s. Funded by members, never pay-to-win.</p>' +
       '<a class="btn btn-p btn-sm" href="' + DISCORD + '" style="align-self:flex-start">Join the Discord</a></div>' +
       '<nav class="foot-col" aria-label="Footer: site"><span class="hud" style="padding-bottom:8px">Navigate</span>' +
       '<a href="servers.html">Servers</a><a href="stats.html">Stats &amp; leaderboards</a><a href="modding.html">Modding</a><a href="tools.html">Tools</a><a href="media.html">Media</a></nav>' +
