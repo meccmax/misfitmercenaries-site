@@ -16,10 +16,6 @@
 
   var CATS = [
     { id: 'playtime', label: 'Playtime', unit: 'Hours', fmt: hours },
-    { id: 'kills', label: 'Player kills', unit: 'Kills', fmt: num },
-    { id: 'kdratio', label: 'K/D', unit: 'K/D ratio', fmt: function (v) { return (+v || 0).toFixed(2); } },
-    { id: 'longest_shot', label: 'Longest shot', unit: 'Distance', fmt: metres },
-    { id: 'longest_kill', label: 'Longest kill', unit: 'Distance', fmt: metres },
     { id: 'deaths', label: 'Deaths', unit: 'Deaths', fmt: num }
   ];
   var RANGES = [
@@ -227,14 +223,14 @@
     var out = document.getElementById('lookup-out');
     var ids = Object.keys(p.servers || {});
     var pick = state.srv !== 'all' && p.servers[state.srv] ? [state.srv] : ids;
-    var tot = { kills: 0, deaths: 0, playtime: 0, longest_shot: 0, longest_kill: 0 };
+    var tot = { deaths: 0, playtime: 0 };
     pick.forEach(function (id) {
       var s = p.servers[id];
-      tot.kills += s.kills || 0; tot.deaths += s.deaths || 0; tot.playtime += s.playtime || 0;
-      tot.longest_shot = Math.max(tot.longest_shot, s.longest_shot || 0); tot.longest_kill = Math.max(tot.longest_kill, s.longest_kill || 0);
+      tot.deaths += s.deaths || 0; tot.playtime += s.playtime || 0;
     });
-    var kd = tot.deaths ? tot.kills / tot.deaths : tot.kills;
-    var tiles = [['Player kills', num(tot.kills)], ['Deaths', num(tot.deaths)], ['K/D', kd.toFixed(2)], ['Longest shot', metres(tot.longest_shot)], ['Hours played', hours(tot.playtime)], ['Longest kill', metres(tot.longest_kill)]];
+    var bestRank = null;
+    pick.forEach(function (id) { var r = ((p.ranks || {})[id] || {}).playtime; if (r && (!bestRank || r < bestRank)) bestRank = r; });
+    var tiles = [['Hours played', hours(tot.playtime)], ['Deaths', num(tot.deaths)], ['Servers played', String(pick.length)], ['Best playtime rank', bestRank ? '#' + bestRank : '—']];
     var best = [];
     pick.forEach(function (id) {
       var r = (p.ranks || {})[id] || {};
@@ -266,9 +262,9 @@
       });
     }
     var cards = [
-      ['Longest shot', top('longest_shot') && metres(top('longest_shot').value), top('longest_shot') && top('longest_shot').name],
-      ['Most player kills', top('kills') && num(top('kills').value), top('kills') && top('kills').name],
       ['Most hours played', top('playtime') && hours(top('playtime').value), top('playtime') && top('playtime').name],
+      ['Most deaths', top('deaths') && num(top('deaths').value), top('deaths') && top('deaths').name],
+      ['Players on the boards', D.players ? num(D.players.players.length) : null, D.players ? 'Across all MM servers' : null],
       ['Peak population', peak && peak.v, peak && (((srvById(peak.id) || {}).map || peak.id) + ' · ' + new Date(peak.t * 1000).toLocaleDateString())]
     ];
     document.getElementById('records').innerHTML = cards.map(function (r) {

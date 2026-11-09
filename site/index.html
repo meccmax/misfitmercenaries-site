@@ -100,7 +100,7 @@
     <div class="side stack" style="gap:18px">
       <div class="hud-o">// 03 — Field intel</div>
       <h2 class="h2">Look up your record</h2>
-      <p class="lead" style="font-size:18px">Live server status, population graphs and leaderboards for every MM DayZ server. Search your name to see your hours played, kills and longest shot.</p>
+      <p class="lead" style="font-size:18px">Live server status, population graphs and leaderboards for every MM DayZ server. Search your name to see your hours played and where you rank.</p>
       <form class="stack" action="stats.html" method="get" style="gap:10px;padding-top:6px">
         <label for="home-lookup" class="hud">Player name</label>
         <div class="row" style="flex-wrap:nowrap"><input id="home-lookup" name="player" class="input" type="search" placeholder="Your in-game name" autocomplete="off"><button class="btn btn-p" type="submit">Search</button></div>
@@ -143,7 +143,7 @@
 </main>
 <div id="site-footer"></div>
 <script>
-/* Home "Top mercs" preview: top 3 players by kills across all servers, if the stats feed has run. */
+/* Home "Top mercs" preview: top 3 players by hours played across all servers, if the stats feed has run. */
 document.addEventListener('DOMContentLoaded', function () {
   fetch('data/live/leaderboards.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (lb) {
     var rows = (lb.combined && lb.combined.playtime) || [];

@@ -28,9 +28,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG = process.env.MM_CONFIG || path.join(ROOT, 'site/data/servers.json');
 const LIVE = process.env.MM_LIVE || path.join(ROOT, 'site/data/live');
 const HISTORY_DAYS = 35;                       // how much player-count history to keep
-const STATS = ['kills', 'kdratio', 'longest_shot', 'longest_kill', 'playtime', 'deaths'];
-const SUM_STATS = ['kills', 'deaths', 'playtime', 'suicides', 'hits'];
-const MAX_STATS = ['longest_shot', 'longest_kill'];
+// MM servers are PvE, so player-kill stats (kills, K/D, longest kill/shot) are not tracked.
+const STATS = ['playtime', 'deaths'];
+const SUM_STATS = ['deaths', 'playtime', 'suicides'];
+const MAX_STATS = [];
 const CF_BASE = process.env.CFTOOLS_BASE || 'https://data.cftools.cloud'; // override only for testing
 const UA = 'MisfitMercenariesSite/1.0 (+https://github.com/meccmax)';
 
@@ -105,9 +106,13 @@ async function cfGet(p) {
   return r.json();
 }
 async function cfLeaderboard(serverApiId, stat) {
-  const q = new URLSearchParams({ stat, order: '1', limit: '100' }); // order 1 = highest first
+  const q = new URLSearchParams({ stat, order: '-1', limit: '100' }); // order -1 = highest first (1 returns lowest first)
   const res = await cfGet(`v1/server/${serverApiId}/leaderboard?${q}`);
   return res.leaderboard || [];
+}
+async function cfLookupSteam(steam64) {
+  const res = await cfGet(`v1/users/lookup?${new URLSearchParams({ identifier: steam64 })}`);
+  return res.cftools_id || null;
 }
 async function cfOnlineCount(serverApiId) {
   const res = await cfGet(`v1/server/${serverApiId}/GSM/list`);
@@ -172,6 +177,12 @@ async function main() {
 
   /* 3. leaderboards + players */
   if (!cfReady) return;
+  // turn hidden Steam IDs into CFTools IDs so those players are left off every board
+  for (const sid of (((cfg.hidden_players || {}).steam_ids) || [])) {
+    try { const id = await cfLookupSteam(String(sid).trim()); if (id) hidden.add(id); }
+    catch (e) { log(`hidden player lookup failed for one Steam ID (${e.message})`); }
+  }
+  log(`hiding ${hidden.size} player(s) from public stats`);
   const lb = { _comment: 'Top 100 per stat from CFTools. Generated; do not edit by hand.', generated_at: now.toISOString(), stats: STATS, servers: {}, combined: {} };
   const people = new Map(); // cftools_id -> { name, servers: {srv: stats}, ranks: {srv: {stat: rank}} }
   let any = false;
@@ -187,8 +198,7 @@ async function main() {
           const p = people.get(r.cftools_id) || { name: r.latest_name, servers: {}, ranks: {} };
           p.name = r.latest_name || p.name;
           p.servers[s.id] = {
-            kills: r.kills || 0, deaths: r.deaths || 0, suicides: r.suicides || 0, hits: r.hits || 0,
-            playtime: r.playtime || 0, kdratio: r.kdratio || 0, longest_kill: r.longest_kill || 0, longest_shot: r.longest_shot || 0
+            deaths: r.deaths || 0, suicides: r.suicides || 0, playtime: r.playtime || 0
           };
           (p.ranks[s.id] = p.ranks[s.id] || {})[stat] = i + 1;
           people.set(r.cftools_id, p);
@@ -203,7 +213,6 @@ async function main() {
     const t = { name: p.name };
     for (const k of SUM_STATS) t[k] = Object.values(p.servers).reduce((a, s) => a + (s[k] || 0), 0);
     for (const k of MAX_STATS) t[k] = Math.max(0, ...Object.values(p.servers).map((s) => s[k] || 0));
-    t.kdratio = t.deaths ? t.kills / t.deaths : t.kills;
     return t;
   });
   for (const stat of STATS) {
@@ -211,7 +220,7 @@ async function main() {
       .filter((p) => (p[stat] || 0) > 0)
       .sort((a, b) => b[stat] - a[stat])
       .slice(0, 100)
-      .map((p, i) => ({ rank: i + 1, name: p.name, value: stat === 'kdratio' ? +p[stat].toFixed(2) : p[stat] }));
+      .map((p, i) => ({ rank: i + 1, name: p.name, value: p[stat] }));
   }
   await writeJSON('leaderboards.json', lb);
   await writeJSON('players.json', {

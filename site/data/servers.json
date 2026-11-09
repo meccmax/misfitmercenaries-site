@@ -82,7 +82,15 @@
     }
   ],
   "hidden_players": {
-    "_comment": "Players who asked to be left off public leaderboards and lookup. Add their CFTools ID (from their CFTools profile URL) to the list below; the next stats update removes them.",
+    "_comment": "Players left off the public leaderboards, records and player lookup (for example staff, or anyone who asks). Add Steam64 IDs to steam_ids, or CFTools IDs to cftools_ids. The next stats update removes them.",
+    "steam_ids": [
+      "76561197983041778",
+      "76561198018774753",
+      "76561198288815712",
+      "76561199410711897",
+      "76561199509826361",
+      "76561198034389151"
+    ],
     "cftools_ids": []
   }
 }

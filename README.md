@@ -66,5 +66,5 @@ Until you do this, the old Google Site stays live and nothing changes for player
 - `scripts/update-stats.mjs` queries each server, pulls CFTools leaderboards (top 100 per stat), and writes JSON files that the Stats page reads.
 - Those files are kept on a separate branch called `stats-data`, so the `main` history stays clean. Don't edit that branch by hand.
 - Population history is kept for 35 days.
-- **Hiding a player:** add their CFTools ID to `hidden_players.cftools_ids` in `site/data/servers.json`. They drop off the boards and lookup on the next run.
+- **Hiding a player:** add their Steam64 ID to `hidden_players.steam_ids` (or CFTools ID to `cftools_ids`) in `site/data/servers.json`. They drop off the boards and lookup on the next run.
 - GitHub pauses scheduled workflows in a repo with no activity for 60 days. The stats updates count as activity, but if it ever stops, just click **Run workflow** once.
