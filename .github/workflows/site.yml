@@ -76,7 +76,7 @@ jobs:
         run: |
           pip install --quiet pillow
           # ffmpeg makes the preview frame for uploaded video clips (only installed when clips exist)
-          if ls site/media/*/*.mp4 site/media/*/*.webm >/dev/null 2>&1 && ! command -v ffmpeg >/dev/null; then
+          if find site/media \( -name '*.mp4' -o -name '*.webm' \) | grep -q . && ! command -v ffmpeg >/dev/null; then
             sudo apt-get -qq update && sudo apt-get -qq install -y --no-install-recommends ffmpeg >/dev/null
           fi
           python scripts/build-media.py
