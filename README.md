@@ -17,7 +17,8 @@ Nothing to install, no build step. Edit a file, commit, and the site updates its
 | Page text | the matching `.html` file in `site/` (`index.html` is the home page) |
 | Server rules | `site/join.html` (look for "Edit the rules here") |
 | Monthly costs panel | `site/join.html` (look for "Costs:") |
-| Media album covers | put images in `site/assets/img/media/`, then see the note at the top of `site/media.html` |
+| Media screenshots and videos | see **Adding screenshots and videos** below |
+| Media albums (add or rename a game) | `site/data/albums.json` |
 
 Every JSON file has a `_comment` field explaining what each setting does.
 
@@ -60,6 +61,22 @@ With just `query_port` filled in, status and population graphs start working on 
 Until you do this, the old Google Site stays live and nothing changes for players.
 
 ---
+
+## Adding screenshots and videos
+
+Each game has its own folder under `site/media/` (for example `site/media/dayz/`). The Media page builds itself from those folders on every deploy, including small preview images, so you never edit any page code.
+
+**Screenshots**
+1. On GitHub, open `site` → `media` → the game's folder.
+2. Click **Add file → Upload files**, drag in your screenshots (JPG, PNG or WebP) and click **Commit changes**.
+3. In a couple of minutes they appear on the Media page, newest first if the file names start with a date (e.g. `2026-11-08 convoy.jpg`).
+- Want a specific album cover? Name one image `cover.jpg` (or `.png`).
+- To remove one, open the file on GitHub, click the **…** menu → **Delete file** → **Commit changes**.
+
+**Videos**
+- **Best:** upload to YouTube (public or unlisted). Then on GitHub open that game's `videos.txt`, click the pencil, paste the link on a new line and commit. Add a title after a `|` if you like:
+  `https://www.youtube.com/watch?v=abc123 | Convoy ambush at the docks`
+- **Short clips:** an `.mp4` under 25 MB can be uploaded straight into the folder like a screenshot. Anything bigger has to go on YouTube (GitHub's limit).
 
 ## How the stats work
 - The workflow in `.github/workflows/site.yml` runs on every push and every 30 minutes (GitHub sometimes runs scheduled jobs a few minutes late).

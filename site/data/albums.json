@@ -1,0 +1,124 @@
+{
+  "_comment": "Media page albums, in display order. Fields: id = the folder name under site/media/ that holds this album's screenshots and videos.txt (lowercase, no spaces). name = title shown on the site. era = small label under the title. group = which filter button it appears under (survival, milsim, sw = Star Wars, mmo). active = true shows an orange 'Active' badge (games we play now), false shows 'Archive'. To add a game: add a block here and create a folder with the same id under site/media/.",
+  "albums": [
+    {
+      "id": "dayz",
+      "name": "DayZ",
+      "era": "Current",
+      "group": "survival",
+      "active": true
+    },
+    {
+      "id": "arma-reforger",
+      "name": "Arma Reforger",
+      "era": "Current",
+      "group": "milsim",
+      "active": true
+    },
+    {
+      "id": "conan-exiles",
+      "name": "Conan Exiles",
+      "era": "Current",
+      "group": "survival",
+      "active": true
+    },
+    {
+      "id": "dune-awakening",
+      "name": "Dune Awakening",
+      "era": "Current",
+      "group": "survival",
+      "active": true
+    },
+    {
+      "id": "dayz-mod",
+      "name": "DayZ Mod",
+      "era": "Arma 2 era",
+      "group": "milsim",
+      "active": false
+    },
+    {
+      "id": "arma-3",
+      "name": "Arma 3",
+      "era": "Archive",
+      "group": "milsim",
+      "active": false
+    },
+    {
+      "id": "star-wars-galaxies",
+      "name": "Star Wars Galaxies",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "swg-legends",
+      "name": "SWG: Legends",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "swgemu-official",
+      "name": "SWGEmu — Official",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "swgemu-rotf",
+      "name": "SWGEmu — Return of the Force",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "swgemu-hydian-way",
+      "name": "SWGEmu — Hydian Way",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "swtor",
+      "name": "Star Wars: The Old Republic",
+      "era": "Archive",
+      "group": "sw",
+      "active": false
+    },
+    {
+      "id": "everquest-ii",
+      "name": "EverQuest II",
+      "era": "Archive",
+      "group": "mmo",
+      "active": false
+    },
+    {
+      "id": "fallen-earth",
+      "name": "Fallen Earth",
+      "era": "Archive",
+      "group": "mmo",
+      "active": false
+    },
+    {
+      "id": "apb",
+      "name": "APB",
+      "era": "Archive",
+      "group": "mmo",
+      "active": false
+    },
+    {
+      "id": "archeage",
+      "name": "ArcheAge",
+      "era": "Archive",
+      "group": "mmo",
+      "active": false
+    },
+    {
+      "id": "new-world",
+      "name": "New World",
+      "era": "Archive",
+      "group": "mmo",
+      "active": false
+    }
+  ]
+}

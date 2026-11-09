@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  var DISCORD = 'https://discord.gg/JT9wvBrYHt';
+  var DISCORD = 'https://www.dsc.gg/mmservers';
   var GITHUB = 'https://github.com/meccmax';
 
   var NAV = [
@@ -17,7 +17,6 @@
     ['tools', 'Tools', 'tools.html'],
     ['stats', 'Stats', 'stats.html'],
     ['media', 'Media', 'media.html'],
-    ['forums', 'Forums', 'forums.html'],
     ['about', 'About', 'about.html'],
     ['join', 'Join', 'join.html']
   ];
@@ -77,7 +76,7 @@
       '<nav class="foot-col" aria-label="Footer: site"><span class="hud" style="padding-bottom:8px">Navigate</span>' +
       '<a href="servers.html">Servers</a><a href="stats.html">Stats &amp; leaderboards</a><a href="modding.html">Modding</a><a href="tools.html">Tools</a><a href="media.html">Media</a></nav>' +
       '<nav class="foot-col" aria-label="Footer: community"><span class="hud" style="padding-bottom:8px">Community</span>' +
-      '<a href="forums.html">Forums</a><a href="about.html">About us</a><a href="join.html">Rules &amp; joining</a><a href="support.html">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
+      '<a href="about.html">About us</a><a href="join.html">Rules &amp; joining</a><a href="support.html">Support the servers</a><a href="' + GITHUB + '">GitHub</a></nav>' +
       '<div class="foot-col" style="min-width:260px;gap:10px"><span class="hud" style="padding-bottom:8px">Server nodes</span>' +
       '<div class="ipbox"><span>game.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Main</span></div>' +
       '<div class="ipbox"><span>servers.misfitmercenaries.com</span><span class="hud" style="font-size:10px;padding-right:6px">Backup</span></div></div>' +

@@ -61,6 +61,15 @@ jobs:
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" stats-data
           rm -rf .git
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build media index (screenshots, thumbnails, videos)
+        run: |
+          pip install --quiet pillow
+          python scripts/build-media.py
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

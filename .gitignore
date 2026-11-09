@@ -1,3 +1,5 @@
 site/data/live/*.json
 node_modules/
 .DS_Store
+site/media/*/thumbs/
+site/data/media.json
