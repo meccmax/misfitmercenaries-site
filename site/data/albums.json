@@ -10,13 +10,6 @@
       "cover": "dayz-026.jpg"
     },
     {
-      "id": "arma-reforger",
-      "name": "Arma Reforger",
-      "era": "Archive",
-      "group": "milsim",
-      "active": false
-    },
-    {
       "id": "conan-exiles",
       "name": "Conan Exiles",
       "era": "Archive",
@@ -38,9 +31,9 @@
       "active": false
     },
     {
-      "id": "arma-3",
-      "name": "Arma 3",
-      "era": "Archive",
+      "id": "arma",
+      "name": "Arma Series",
+      "era": "Arma 3 & Reforger",
       "group": "milsim",
       "active": false
     },
