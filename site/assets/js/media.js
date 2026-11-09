@@ -73,7 +73,7 @@
           (it.title ? '<span class="media-cap">' + esc(it.title) + '</span>' : '') + '</div>';
       }
       if (it.type === 'video') {
-        return '<div class="media-tile media-video"><video controls preload="none" playsinline' + (it.poster ? ' poster="' + esc(it.poster) + '"' : '') + ' src="' + esc(it.src) + '"></video>' +
+        return '<div class="media-tile media-video"><video controls playsinline' + (it.poster ? ' preload="none" poster="' + esc(it.poster) + '"' : ' preload="metadata"') + ' src="' + esc(it.src) + '"></video>' +
           (it.title ? '<span class="media-cap">' + esc(it.title) + '</span>' : '') + '</div>';
       }
       return '<a class="media-tile media-link" href="' + esc(it.url) + '" target="_blank" rel="noopener"><span class="hud-o">Video link</span><span>' + esc(it.title) + '</span></a>';
