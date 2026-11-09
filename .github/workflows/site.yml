@@ -65,6 +65,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Reuse thumbnails from earlier runs
+        uses: actions/cache@v4
+        with:
+          path: site/media/*/thumbs
+          key: thumbs-${{ hashFiles('site/media/**/*.jpg', 'site/media/**/*.jpeg', 'site/media/**/*.png', 'site/media/**/*.webp', 'site/media/**/*.gif') }}
+          restore-keys: thumbs-
+
       - name: Build media index (screenshots, thumbnails, videos)
         run: |
           pip install --quiet pillow

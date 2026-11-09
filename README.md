@@ -69,7 +69,7 @@ Each game has its own folder under `site/media/` (for example `site/media/dayz/`
 **Screenshots**
 1. On GitHub, open `site` → `media` → the game's folder.
 2. Click **Add file → Upload files**, drag in your screenshots (JPG, PNG or WebP) and click **Commit changes**.
-3. In a couple of minutes they appear on the Media page, newest first if the file names start with a date (e.g. `2026-11-08 convoy.jpg`).
+3. In a couple of minutes they appear on the Media page, in file-name order (numbers count properly, so `2` comes before `10`; date-named files show oldest first).
 - Want a specific album cover? Name one image `cover.jpg` (or `.png`).
 - To remove one, open the file on GitHub, click the **…** menu → **Delete file** → **Commit changes**.
 

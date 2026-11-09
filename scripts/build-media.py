@@ -12,6 +12,7 @@ site/data/media.json, which the Media page reads.
 Needs Pillow for thumbnails (pip install pillow). Without it, full images are used as previews.
 Run locally with:  python3 scripts/build-media.py
 """
+import hashlib
 import json
 import re
 import sys
@@ -40,12 +41,14 @@ def make_thumb(src, album_dir):
     rel = src.relative_to(SITE).as_posix()
     if Image is None:
         return rel, None, None
-    out = album_dir / "thumbs" / (src.stem + ".webp")
+    # thumbnail name includes a short content hash, so a replaced image gets a fresh thumbnail
+    digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
+    out = album_dir / "thumbs" / f"{src.stem}-{digest}.webp"
     try:
         with Image.open(src) as im:
             im = ImageOps.exif_transpose(im)
             w, h = im.size
-            if not out.exists() or out.stat().st_mtime < src.stat().st_mtime:
+            if not out.exists():
                 out.parent.mkdir(exist_ok=True)
                 t = im.convert("RGB")
                 if t.width > THUMB_W:
@@ -65,7 +68,9 @@ def main():
         d = MEDIA / a["id"]
         items, cover = [], None
         if d.is_dir():
-            files = sorted((f for f in d.iterdir() if f.is_file()), key=lambda f: f.name.lower(), reverse=True)
+            # natural file-name order: 2 before 10, and date-named files oldest first
+            natural = lambda f: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", f.name.lower())]
+            files = sorted((f for f in d.iterdir() if f.is_file()), key=natural)
             for f in files:
                 ext = f.suffix.lower()
                 if ext in IMG_EXT:
