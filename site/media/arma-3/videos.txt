@@ -3,4 +3,8 @@
 # any other link shows as a button. Add a title after a | if you want one, e.g.
 # https://www.youtube.com/watch?v=abc123 | Convoy ambush at the docks
 # Lines starting with # are ignored.
+https://youtu.be/dLNhrxM3Qic | Arma Reforger | Misfit Mercenaries Event Night | 02012025
 https://youtu.be/1yUGTnysgJw | Misfit Mercenaries | Event Night | 02/22/2025
+https://youtu.be/Ct1L2EDMnZE | Misfit Mercenaries | Event Night | 03152025
+https://youtu.be/7cn_y0EgDcU | Misfit Mercenaries | Event Night | 03082025
+https://youtu.be/zNBU2hPLsM4 | dancin' in anizay with the homies
