@@ -81,19 +81,27 @@ async function a2sWithRetry(host, port) {
 /* ---------- CFTools Data API ---------- */
 let cfToken = null;
 async function cfAuth() {
-  const id = process.env.CFTOOLS_APP_ID, secret = process.env.CFTOOLS_SECRET;
+  const id = (process.env.CFTOOLS_APP_ID || '').trim(), secret = (process.env.CFTOOLS_SECRET || '').trim();
   if (!id || !secret) return false;
   const r = await fetch(`${CF_BASE}/v1/auth/register`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
     body: JSON.stringify({ application_id: id, secret })
   });
-  if (!r.ok) throw new Error(`CFTools auth failed: HTTP ${r.status}`);
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    const hint = r.status === 404 ? ' (CFTools does not recognise the Application ID: check the CFTOOLS_APP_ID secret)'
+      : (r.status === 401 || r.status === 403) ? ' (Application ID found but the Secret was rejected: check the CFTOOLS_SECRET secret)' : '';
+    throw new Error(`CFTools auth failed: HTTP ${r.status} ${body.slice(0, 200)}${hint}. App ID length: ${id.length} characters`);
+  }
   cfToken = (await r.json()).token;
   return true;
 }
 async function cfGet(p) {
   const r = await fetch(`${CF_BASE}/${p}`, { headers: { Authorization: `Bearer ${cfToken}`, 'User-Agent': UA } });
-  if (!r.ok) throw new Error(`CFTools ${p}: HTTP ${r.status}`);
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    throw new Error(`CFTools ${p.split('?')[0]}: HTTP ${r.status} ${body.slice(0, 200)}`);
+  }
   return r.json();
 }
 async function cfLeaderboard(serverApiId, stat) {
