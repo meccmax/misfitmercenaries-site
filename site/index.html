@@ -100,14 +100,14 @@
     <div class="side stack" style="gap:18px">
       <div class="hud-o">// 03 — Field intel</div>
       <h2 class="h2">Look up your record</h2>
-      <p class="lead" style="font-size:18px">Live server status, population graphs and leaderboards for every MM DayZ server. Search your name to see your kills, longest shot and hours played.</p>
+      <p class="lead" style="font-size:18px">Live server status, population graphs and leaderboards for every MM DayZ server. Search your name to see your hours played, kills and longest shot.</p>
       <form class="stack" action="stats.html" method="get" style="gap:10px;padding-top:6px">
         <label for="home-lookup" class="hud">Player name</label>
         <div class="row" style="flex-wrap:nowrap"><input id="home-lookup" name="player" class="input" type="search" placeholder="Your in-game name" autocomplete="off"><button class="btn btn-p" type="submit">Search</button></div>
       </form>
     </div>
     <div class="grow panel brk pad stack">
-      <div class="card-top"><span class="hud">Top mercs — all servers</span><span class="hud-o">Kills</span></div>
+      <div class="card-top"><span class="hud">Top mercs — all servers</span><span class="hud-o">Hours played</span></div>
       <div class="rule"></div>
       <ol id="home-top" class="stack" style="list-style:none;padding:0;gap:0"><li class="empty">Leaderboards appear here once the stats feed is connected</li></ol>
       <a href="stats.html" class="hud-o" style="align-self:flex-end;min-height:44px;display:inline-flex;align-items:center">Full leaderboards &rarr;</a>
@@ -146,12 +146,12 @@
 /* Home "Top mercs" preview: top 3 players by kills across all servers, if the stats feed has run. */
 document.addEventListener('DOMContentLoaded', function () {
   fetch('data/live/leaderboards.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (lb) {
-    var rows = (lb.combined && lb.combined.kills) || [];
+    var rows = (lb.combined && lb.combined.playtime) || [];
     if (!rows.length) return;
     var esc = window.MM.esc;
     document.getElementById('home-top').innerHTML = rows.slice(0, 3).map(function (p, i) {
       return '<li style="display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #1E2126">' +
-        '<span class="rank ' + (i === 0 ? 'top1' : 'top3') + '">0' + (i + 1) + '</span><span>' + esc(p.name) + '</span><span class="mono" style="color:var(--silver)">' + esc(p.value) + '</span></li>';
+        '<span class="rank ' + (i === 0 ? 'top1' : 'top3') + '">0' + (i + 1) + '</span><span>' + esc(p.name) + '</span><span class="mono" style="color:var(--silver)">' + Math.round(p.value / 3600).toLocaleString() + ' h</span></li>';
     }).join('');
   }).catch(function () {});
 });

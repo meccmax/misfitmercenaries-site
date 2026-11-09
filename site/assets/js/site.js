@@ -197,7 +197,41 @@
     }).catch(function () {});
   }
 
+  /* ---------- screenshot carousels ([data-carousel]) ----------
+     Auto-advances every 5 s, pauses on hover/focus, never auto-plays for reduced-motion users. */
+  function wireCarousels() {
+    document.querySelectorAll('[data-carousel]').forEach(function (box) {
+      var slides = box.querySelectorAll('.shot'), dots = box.querySelectorAll('.dot'), cap = box.querySelector('.shot-cap');
+      if (!slides.length) return;
+      var i = 0, timer = null, paused = false;
+      var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function show(n) {
+        i = (n + slides.length) % slides.length;
+        slides.forEach(function (s, k) {
+          var on = k === i;
+          s.classList.toggle('is-on', on);
+          if (on) s.removeAttribute('aria-hidden'); else s.setAttribute('aria-hidden', 'true');
+          var a = s.querySelector('a'); if (a) a.tabIndex = on ? 0 : -1;
+        });
+        dots.forEach(function (d, k) { if (k === i) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current'); });
+        if (cap) cap.textContent = slides[i].getAttribute('data-caption') || '';
+      }
+      function start() { if (still || timer) return; timer = setInterval(function () { if (!paused) show(i + 1); }, 5000); }
+      function restart() { clearInterval(timer); timer = null; start(); }
+      box.addEventListener('click', function (e) {
+        var b = e.target.closest('.shot-btn'); if (b) { show(i + (+b.getAttribute('data-dir'))); restart(); return; }
+        var d = e.target.closest('.dot'); if (d) { show(Array.prototype.indexOf.call(dots, d)); restart(); }
+      });
+      box.addEventListener('mouseenter', function () { paused = true; });
+      box.addEventListener('mouseleave', function () { paused = false; });
+      box.addEventListener('focusin', function () { paused = true; });
+      box.addEventListener('focusout', function () { paused = false; });
+      show(0); start();
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    wireCarousels();
     buildHeader();
     buildFooter();
     wireFilters();

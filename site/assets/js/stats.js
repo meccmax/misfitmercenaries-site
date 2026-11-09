@@ -15,11 +15,11 @@
   var opt = function (p) { return p.catch(function () { return null; }); };
 
   var CATS = [
+    { id: 'playtime', label: 'Playtime', unit: 'Hours', fmt: hours },
     { id: 'kills', label: 'Player kills', unit: 'Kills', fmt: num },
     { id: 'kdratio', label: 'K/D', unit: 'K/D ratio', fmt: function (v) { return (+v || 0).toFixed(2); } },
     { id: 'longest_shot', label: 'Longest shot', unit: 'Distance', fmt: metres },
     { id: 'longest_kill', label: 'Longest kill', unit: 'Distance', fmt: metres },
-    { id: 'playtime', label: 'Playtime', unit: 'Hours', fmt: hours },
     { id: 'deaths', label: 'Deaths', unit: 'Deaths', fmt: num }
   ];
   var RANGES = [
@@ -33,7 +33,7 @@
   function hours(sec) { return (+sec || 0) ? Math.round(+sec / 3600).toLocaleString() + ' h' : '—'; }
 
   var params = new URLSearchParams(location.search);
-  var state = { srv: params.get('server') || 'all', range: '24h', cat: 'kills' };
+  var state = { srv: params.get('server') || 'all', range: '24h', cat: 'playtime' };
   var D = { cfg: null, status: null, history: null, lb: null, players: null };
 
   function chips(el, items, current, onPick) {
