@@ -3,11 +3,14 @@
    Called by scripts/update-stats.mjs every run (about every 30 minutes).
 
    Input: each DayZ server's public_stats.json written by MM BlackBox.
-     - Fetched from the URL template in servers.json → "blackbox.url",
-       e.g. "https://game.misfitmercenaries.com:PORT/blackbox/{server}/{file}".
-       {server} becomes the server id (deer-isle / sakhal / nasdara),
-       {file} becomes public_stats.json (or public_stats_season_<id>.json).
-     - Optional BLACKBOX_TOKEN repository secret is sent as "Authorization: Bearer …".
+     - Fetched from the URL template in servers.json → "blackbox.url", normally the
+       MM Server Agent: "https://game.misfitmercenaries.com:2999/mm-agent/v1/blackbox-stats/{port}/{file}".
+       {port} becomes the server's game_port, {server} its id (deer-isle / sakhal / nasdara),
+       {file} public_stats.json (or public_stats_season_<id>.json).
+     - The BLACKBOX_TOKEN repository secret is sent as "Authorization: Bearer …".
+     - The agent uses its own self-made encryption key, so "blackbox.agent_fingerprint" pins it:
+       the connection is only used (and the password only sent) if the agent's key matches,
+       the same check the MM Launcher does (fingerprint from trust/agents.jsonc in mm-launcher).
      - For local testing set MM_BLACKBOX_DIR to a folder holding <server>/public_stats.json.
 
    Safety: a file is only accepted if it parses and looks right. Otherwise the last
@@ -24,6 +27,11 @@
    ===================================================================== */
 import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import https from 'node:https';
+import tls from 'node:tls';
+import net from 'node:net';
+import zlib from 'node:zlib';
+import { createHash, X509Certificate } from 'node:crypto';
 
 const TOP_N = 50;
 const MIN_HS_KILLS = 25;      // headshot % and AI-kills-per-death need at least this many AI kills
@@ -90,18 +98,69 @@ function cleanFile(raw, serverId) {
 async function readJSON(file) { try { return JSON.parse(await readFile(file, 'utf8')); } catch { return null; } }
 async function writeJSON(file, data) { await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, JSON.stringify(data)); }
 
-async function fetchFile(cfg, serverId, file) {
+const MAX_DOWNLOAD = 40 * 1024 * 1024;
+
+/* The agent's key fingerprint: base64 SHA-256 of its public key (SubjectPublicKeyInfo), no padding. */
+const keyFingerprint = (cert) => createHash('sha256')
+  .update(new X509Certificate(cert.raw).publicKey.export({ type: 'spki', format: 'der' }))
+  .digest('base64').replace(/=+$/, '');
+
+/* HTTPS GET to the agent: connect, check its key, and only then send the request (with the password). */
+async function pinnedGet(url, headers, pin) {
+  const u = new URL(url);
+  const socket = await new Promise((resolve, reject) => {
+    const s = tls.connect({ host: u.hostname, port: +u.port || 443, servername: net.isIP(u.hostname) ? undefined : u.hostname, rejectUnauthorized: false });
+    s.setTimeout(15000, () => s.destroy(new Error('connection timed out')));
+    s.once('secureConnect', () => resolve(s));
+    s.once('error', reject);
+  });
+  const fp = keyFingerprint(socket.getPeerCertificate());
+  if (fp !== pin) { socket.destroy(); throw new Error(`the agent's encryption key (${fp}) doesn't match blackbox.agent_fingerprint; not sending the password`); }
+  return new Promise((resolve, reject) => {
+    const req = https.request({ method: 'GET', host: u.hostname, port: u.port, path: u.pathname + u.search,
+      headers: { ...headers, 'Accept-Encoding': 'gzip' }, createConnection: () => socket });
+    req.setTimeout(30000, () => req.destroy(new Error('download timed out')));
+    req.on('error', reject);
+    req.on('response', (res) => {
+      const chunks = []; let size = 0;
+      res.on('data', (c) => { size += c.length; if (size > MAX_DOWNLOAD) req.destroy(new Error('file too large')); else chunks.push(c); });
+      res.on('error', reject);
+      res.on('end', () => {
+        try {
+          let body = Buffer.concat(chunks);
+          if (/gzip/i.test(res.headers['content-encoding'] || '')) body = zlib.gunzipSync(body, { maxOutputLength: MAX_DOWNLOAD });
+          const text = body.toString('utf8');
+          if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode} ${text.slice(0, 120).trim()}`));
+          resolve(text);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.end();
+  });
+}
+
+async function fetchFile(cfg, server, file) {
   if (process.env.MM_BLACKBOX_DIR) {
-    const raw = await readFile(path.join(process.env.MM_BLACKBOX_DIR, serverId, file), 'utf8');
+    const raw = await readFile(path.join(process.env.MM_BLACKBOX_DIR, server.id, file), 'utf8');
     return JSON.parse(raw);
   }
-  const url = cfg.url.replace('{server}', encodeURIComponent(serverId)).replace('{file}', encodeURIComponent(file));
+  const url = cfg.url.replace('{server}', encodeURIComponent(server.id)).replace('{port}', String(server.game_port || ''))
+    .replace('{file}', encodeURIComponent(file));
   const headers = { 'User-Agent': UA, Accept: 'application/json' };
   const token = (process.env.BLACKBOX_TOKEN || '').trim();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const r = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return JSON.parse(await r.text()); // throws on a half-written file
+  if (token) {
+    if (!url.startsWith('https://')) throw new Error('blackbox.url must start with https:// when BLACKBOX_TOKEN is set (the password is never sent unencrypted)');
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const pin = String(cfg.agent_fingerprint || '').trim();
+  let text;
+  if (pin && url.startsWith('https://')) text = await pinnedGet(url, headers, pin);
+  else {
+    const r = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    text = await r.text();
+  }
+  return JSON.parse(text); // throws on a half-written file
 }
 
 /* Combine several servers' copies of one player into one stats object (rules from the BlackBox spec). */
@@ -178,22 +237,27 @@ export async function updateBlackBox({ cfg, servers, live, log }) {
   const bbCfg = cfg.blackbox || {};
   if (!process.env.MM_BLACKBOX_DIR && !bbCfg.url) { log('BlackBox: no "blackbox.url" in servers.json yet, skipping'); return; }
   const RAW = path.join(live, 'bb-raw'), OUT = path.join(live, 'bb');
-  const ids = servers.filter((s) => s.blackbox !== false).map((s) => s.id);
+  const list = servers.filter((s) => s.blackbox !== false);
+  if (!process.env.MM_BLACKBOX_DIR && /\/mm-agent\//.test(bbCfg.url) && !(process.env.BLACKBOX_TOKEN || '').trim()) {
+    log('BlackBox: the BLACKBOX_TOKEN secret isn\'t set yet (run stats-token.bat on the server and add it in GitHub), skipping');
+    return;
+  }
 
   /* 1. fetch each server's current file, keep the last good copy on failure */
   const current = [];
-  for (const id of ids) {
+  for (const srv of list) {
+    const id = srv.id;
     const keptPath = path.join(RAW, `${id}.json`);
     const kept = await readJSON(keptPath);
     let file = null;
-    try { file = cleanFile(await fetchFile(bbCfg, id, 'public_stats.json'), id); }
+    try { file = cleanFile(await fetchFile(bbCfg, srv, 'public_stats.json'), id); }
     catch (e) { log(`BlackBox ${id}: ${e.message}${kept ? ' (keeping last good copy)' : ''}`); }
     if (file && kept && file.generated_at < kept.generated_at) { log(`BlackBox ${id}: received an older file than the saved one, ignoring it`); file = null; }
 
     /* 2. season changed → archive the old season's final file */
     if (file && kept && kept.season_id !== file.season_id) {
       let fin = null;
-      try { fin = cleanFile(await fetchFile(bbCfg, id, `public_stats_season_${kept.season_id}.json`), id); }
+      try { fin = cleanFile(await fetchFile(bbCfg, srv, `public_stats_season_${kept.season_id}.json`), id); }
       catch (e) { log(`BlackBox ${id}: final file for ${kept.season_id} not found (${e.message}); archiving the last copy instead`); }
       const arch = fin && fin.season_id === kept.season_id ? fin : kept;
       await writeJSON(path.join(RAW, 'seasons', `${id}__${kept.season_id}.json`), arch);

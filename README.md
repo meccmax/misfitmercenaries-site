@@ -88,7 +88,8 @@ Each game has its own folder under `site/media/` (for example `site/media/dayz/`
 
 ## MM BlackBox player stats (AI kills, travel, longest shot …)
 - Each DayZ server's MM BlackBox writes `profiles\MM_BlackBox\Stats\public_stats.json` every 5 minutes. Every 30 minutes, `scripts/blackbox.mjs` downloads all three, checks them and builds the boards.
-- **To switch it on:** set `blackbox.url` in `site/data/servers.json` to where the files can be downloaded, with `{server}` and `{file}` in it. If that address needs a password, add it as a repository secret called `BLACKBOX_TOKEN`. Until the URL is set, the Stats page keeps showing the CFTools boards.
+- **Where the files come from:** the MM Server Agent on the server machine (v0.16+) shares them at `https://game.misfitmercenaries.com:2999/mm-agent/v1/blackbox-stats/<game port>/public_stats.json` (`blackbox.url` in `site/data/servers.json`). The feed checks the agent's key against `blackbox.agent_fingerprint` before it sends the password.
+- **To switch it on:** on the server, run `update-agent.bat` and then `stats-token.bat` (both as administrator), and copy the password it shows into a repository secret called `BLACKBOX_TOKEN`. Until then the Stats page keeps showing the CFTools boards.
 - Once data arrives, the Stats page switches to the BlackBox boards (Survival, Combat, Travel, Building, Deaths). They come as All-time, This season and past seasons, for All servers or one map. The page also gets a causes-of-death chart, hall-of-fame records and a fuller player lookup.
 - **All servers** adds players' stats from every map together (matched by their anonymous id). Longest/best stats take the highest, and "current life" stays per map.
 - If a download fails or a file is half-written, the last good copy is used. When a server's `season_id` changes (a wipe), the old season's final file is saved and shown under its season name.
