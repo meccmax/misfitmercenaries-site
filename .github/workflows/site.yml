@@ -96,3 +96,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Give GitHub Pages up to 20 minutes to publish (default is 10) so a slow sync doesn't fail the run.
+          timeout: 1200000
