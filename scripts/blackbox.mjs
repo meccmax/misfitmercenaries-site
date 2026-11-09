@@ -83,7 +83,9 @@ function cleanStats(s) {
 /* Accept a file only if it is a real BlackBox export for the server we asked for. */
 function cleanFile(raw, serverId) {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.players)) throw new Error('no players array');
-  if (raw.server_id !== serverId) throw new Error(`server_id is "${raw.server_id}", expected "${serverId}"`);
+  // "deerisle", "Deer Isle" and "deer-isle" all count as the same server
+  const norm = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (norm(raw.server_id) !== norm(serverId)) throw new Error(`server_id is "${raw.server_id}", expected "${serverId}"`);
   if (!iso(raw.generated_at)) throw new Error('generated_at missing');
   const seen = new Set(), players = [];
   for (const p of raw.players) {
