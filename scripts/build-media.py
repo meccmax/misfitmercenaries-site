@@ -96,6 +96,8 @@ def main():
                     vids.append({"type": "youtube", "id": yid, "url": url, "title": title} if yid
                                 else {"type": "link", "url": url, "title": title or url})
                 items = vids + items  # videos first
+        if cover is None and a.get("cover"):
+            cover = next((i for i in items if i["type"] == "image" and i["src"].endswith("/" + a["cover"])), None)
         if cover is None:
             cover = next((i for i in items if i["type"] == "image"), None)
         if cover is None:

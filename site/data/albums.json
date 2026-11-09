@@ -1,33 +1,34 @@
 {
-  "_comment": "Media page albums, in display order. Fields: id = the folder name under site/media/ that holds this album's screenshots and videos.txt (lowercase, no spaces). name = title shown on the site. era = small label under the title. group = which filter button it appears under (survival, milsim, sw = Star Wars, mmo). active = true shows an orange 'Active' badge (games we play now), false shows 'Archive'. To add a game: add a block here and create a folder with the same id under site/media/.",
+  "_comment": "Media page albums, in display order. Fields: id = the folder name under site/media/ that holds this album's screenshots and videos.txt (lowercase, no spaces). name = title shown on the site. era = small label under the title. group = which filter button it appears under (survival, milsim, sw = Star Wars, mmo). active = true shows an orange 'Active' badge (games we host now), false shows 'Archive'. cover = optional file name in that album's folder to use as the album cover (otherwise cover.jpg, or the first screenshot). To add a game: add a block here and create a folder with the same id under site/media/.",
   "albums": [
     {
       "id": "dayz",
       "name": "DayZ",
       "era": "Current",
       "group": "survival",
-      "active": true
+      "active": true,
+      "cover": "dayz-026.jpg"
     },
     {
       "id": "arma-reforger",
       "name": "Arma Reforger",
-      "era": "Current",
+      "era": "Archive",
       "group": "milsim",
-      "active": true
+      "active": false
     },
     {
       "id": "conan-exiles",
       "name": "Conan Exiles",
-      "era": "Current",
+      "era": "Archive",
       "group": "survival",
-      "active": true
+      "active": false
     },
     {
       "id": "dune-awakening",
       "name": "Dune Awakening",
-      "era": "Current",
+      "era": "Archive",
       "group": "survival",
-      "active": true
+      "active": false
     },
     {
       "id": "dayz-mod",

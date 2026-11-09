@@ -1,5 +1,5 @@
 {
-  "_comment": "MM DayZ server list. The Servers page cards, the Stats page and the automatic stats feed all read this one file, so edit servers here only. Fields per server: id = short unique name used in links and stats files (lowercase, no spaces; do not change once stats exist or history starts fresh). name / map / badge / description / style / slots = text shown on the site (leave style or slots as null to show 'Ask in Discord'). server_name = the full name in the DayZ server browser, shown so players can search for it. battlemetrics = optional BattleMetrics page link (null hides the button). dlc = DayZ DLC players must own to join (null = none needed). view = camera rule shown on the card, e.g. '1PP & 3PP' or '1PP only' (null hides the row). game_port = the port players connect to (null hides the copy button). query_port = the steamQueryPort from that server's serverDZ.cfg, used by the stats feed to check online status and player count (null = skip). cftools_server_api_id = the 'Server ID' from the CFTools Cloud server's API settings, used for leaderboards (null = no leaderboards for this server). color = this server's line colour on the population chart (checked for colour-blind safety, keep these three as they are). restart_hours_utc = hours of the day (0-23, UTC) when the server restarts, used to draw restart markers and the 'next restart' time; leave as [] if unknown. mods = tags shown on the card. image = optional screenshot path, e.g. assets/img/deer-isle.jpg (null shows a placeholder).",
+  "_comment": "MM DayZ server list. The Servers page cards, the Stats page and the automatic stats feed all read this one file, so edit servers here only. Fields per server: id = short unique name used in links and stats files (lowercase, no spaces; do not change once stats exist or history starts fresh). name / map / badge / description / style / slots = text shown on the site (leave style or slots as null to show 'Ask in Discord'). server_name = the full name in the DayZ server browser, shown so players can search for it. battlemetrics = optional BattleMetrics page link (null hides the button). dlc = DayZ DLC players must own to join (null = none needed). view = camera rule shown on the card, e.g. '1PP & 3PP' or '1PP only' (null hides the row). game_port = the port players connect to (null hides the copy button). query_port = the steamQueryPort from that server's serverDZ.cfg, used by the stats feed to check online status and player count (null = skip). cftools_server_api_id = the 'Server ID' from the CFTools Cloud server's API settings, used for leaderboards (null = no leaderboards for this server). color = this server's line colour on the population chart (checked for colour-blind safety, keep these three as they are). restart_hours_utc = hours of the day (0-23, UTC) when the server restarts, used to draw restart markers and the 'next restart' time; leave as [] if unknown. mods = tags shown on the card. image = optional screenshot path, e.g. media/dayz/dayz-026.jpg (null shows a placeholder).",
   "host": "135.131.53.111",
   "servers": [
     {
@@ -26,7 +26,7 @@
         "A6 Weapons"
       ],
       "battlemetrics": "https://www.battlemetrics.com/servers/dayz/38328008",
-      "image": null
+      "image": "media/dayz/dayz-026.jpg"
     },
     {
       "id": "sakhal",
@@ -52,7 +52,7 @@
         "A6 Weapons"
       ],
       "battlemetrics": null,
-      "image": null
+      "image": "media/dayz/dayz-035.jpg"
     },
     {
       "id": "nasdara",
@@ -78,7 +78,7 @@
         "A6 Weapons"
       ],
       "battlemetrics": null,
-      "image": null
+      "image": "media/dayz/dayz-016.jpg"
     }
   ],
   "hidden_players": {

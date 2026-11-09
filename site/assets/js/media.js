@@ -33,7 +33,9 @@
     }).join('');
     chips.onclick = function (e) { var b = e.target.closest('[data-g]'); if (b) { group = b.getAttribute('data-g'); renderGrid(); } };
     document.getElementById('group-title').textContent = GROUPS.filter(function (g) { return g.id === group; })[0].title;
-    var list = data.albums.filter(function (a) { return group === 'all' || a.group === group; });
+    // albums with no uploads stay hidden until something is added to their folder
+    var list = data.albums.filter(function (a) { return (a.count > 0 || a.active) && (group === 'all' || a.group === group); });
+    if (!list.length) { document.getElementById('album-grid').innerHTML = '<p class="empty">No albums here yet.</p>'; return; }
     document.getElementById('album-grid').innerHTML = list.map(function (a) {
       var cover = a.cover ? '<img class="cover" src="' + esc(a.cover) + '" alt="" loading="lazy">' : '<div class="ph cover">' + esc(a.name) + '</div>';
       var count = a.count ? a.count + (a.count === 1 ? ' item' : ' items') : 'No uploads yet';
