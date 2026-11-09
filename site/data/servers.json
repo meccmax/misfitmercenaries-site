@@ -15,7 +15,7 @@
       "view": "1PP only",
       "game_port": 2902,
       "query_port": 2903,
-      "cftools_server_api_id": null,
+      "cftools_server_api_id": "52e77c99-3ae5-4a83-a5ff-d33f5a415d95",
       "color": "#d95926",
       "restart_hours_utc": [],
       "mods": [
@@ -41,7 +41,7 @@
       "view": "1PP only",
       "game_port": 2930,
       "query_port": 2931,
-      "cftools_server_api_id": null,
+      "cftools_server_api_id": "a89261e5-221a-4f83-8697-c8fab34c7577",
       "color": "#3987e5",
       "restart_hours_utc": [],
       "mods": [
@@ -67,7 +67,7 @@
       "view": "1PP only",
       "game_port": 2402,
       "query_port": 2403,
-      "cftools_server_api_id": null,
+      "cftools_server_api_id": "6e04ee46-286c-4031-b8ee-fd6b79b031a0",
       "color": "#199e70",
       "restart_hours_utc": [],
       "mods": [
