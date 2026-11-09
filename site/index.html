@@ -141,14 +141,19 @@
 </main>
 <div id="site-footer"></div>
 <script>
-/* Home "Top mercs" preview: top 3 players by hours played across all servers.
-   Uses the MM BlackBox boards when they exist, otherwise the CFTools boards. */
+/* Home "Top mercs" preview: top 3 players by all-time hours played across all servers.
+   Uses the CFTools records (they include time from before MM BlackBox started counting),
+   and the BlackBox board only if CFTools has nothing. */
 document.addEventListener('DOMContentLoaded', function () {
   var get = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }); };
-  get('data/live/bb/boards-network-all_time.json').then(function (b) {
-    return (b.playtime || []).map(function (r) { return { name: r[1], value: r[2] }; });
+  get('data/live/leaderboards.json').then(function (lb) {
+    var rows = (lb.combined && lb.combined.playtime) || [];
+    if (!rows.length) throw 0;
+    return rows;
   }).catch(function () {
-    return get('data/live/leaderboards.json').then(function (lb) { return (lb.combined && lb.combined.playtime) || []; });
+    return get('data/live/bb/boards-network-all_time.json').then(function (b) {
+      return (b.playtime || []).map(function (r) { return { name: r[1], value: r[2] }; });
+    });
   }).then(function (rows) {
     if (!rows.length) return;
     var esc = window.MM.esc;

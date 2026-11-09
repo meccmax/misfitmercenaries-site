@@ -246,6 +246,22 @@
     return items;
   }
 
+  /* All-time "Hours played" comes from CFTools for now: it includes playtime from before BlackBox
+     started counting. Set CF_PLAYTIME to false once BlackBox has caught up. */
+  var CF_PLAYTIME = true;
+  function cfPlaytimeRows() {
+    if (!CF_PLAYTIME || state.period !== 'all_time' || !D.lb) return null;
+    var rows = state.srv === 'all' ? (D.lb.combined || {}).playtime : ((D.lb.servers || {})[state.srv] || {}).playtime;
+    return rows && rows.length ? rows : null;
+  }
+  function cfHoursFor(name) {
+    if (!CF_PLAYTIME || !D.players || !name) return 0;
+    var n = name.toLowerCase(), p = D.players.players.filter(function (x) { return (x.name || '').toLowerCase() === n; })[0];
+    if (!p) return 0;
+    return Object.keys(p.servers || {}).filter(function (id) { return state.srv === 'all' || id === state.srv; })
+      .reduce(function (a, id) { return a + (p.servers[id].playtime || 0); }, 0);
+  }
+
   /* =================== leaderboard =================== */
   function renderBoard() { if (D.bb) bbBoard(); else cfBoard(); }
 
@@ -269,6 +285,20 @@
     var head = '<thead><tr><th style="width:64px">Rank</th><th>Player</th>' + (extraCol ? '<th>' + esc(b.extra) + '</th>' : '') + '<th class="r">' + esc(b.unit) + '</th></tr></thead>';
     var cols = extraCol ? 4 : 3;
     var empty = function (msg) { table.innerHTML = head + '<tbody><tr><td colspan="' + cols + '"><div class="empty">' + msg + '</div></td></tr></tbody>'; more.hidden = true; };
+    var cfRows = state.board === 'playtime' ? cfPlaytimeRows() : null;
+    if (cfRows) {
+      note.textContent = 'All-time hours come from our CFTools server records, so they include time played before BlackBox started counting.';
+      note.hidden = false;
+      var showCf = cfRows.slice(0, state.more ? 50 : 25);
+      table.setAttribute('data-want', '');
+      table.innerHTML = head + '<tbody>' + showCf.map(function (r, i) {
+        var cls = i === 0 ? 'top1' : i < 3 ? 'top3' : '';
+        return '<tr><td><span class="rank ' + cls + '">' + String(i + 1).padStart(2, '0') + '</span></td><td>' + esc(r.name) + '</td><td class="r mono" style="color:var(--silver)">' + hours(r.value) + '</td></tr>';
+      }).join('') + '</tbody>';
+      more.hidden = cfRows.length <= 25;
+      more.textContent = state.more ? 'Show top 25' : 'Show top ' + Math.min(50, cfRows.length);
+      return;
+    }
     if (!hasScope()) return empty(pastEntry() ? 'This server wasn’t part of that season' : 'No BlackBox stats from this server yet');
     var want = state.board + scope() + state.period;
     table.setAttribute('data-want', want);
@@ -383,7 +413,7 @@
       var travel = s.travel_m.foot + s.travel_m.land + s.travel_m.air + s.travel_m.boat;
       var minK = D.bb.min_kills_for_ratios;
       var tiles = [
-        ['Hours played', hours(s.playtime_s)], ['AI kills', num(s.ai_kills)],
+        ['Hours played', hours(per === 'all_time' ? Math.max(s.playtime_s, cfHoursFor(p.name)) : s.playtime_s)], ['AI kills', num(s.ai_kills)],
         ['Deaths', num(s.deaths)], ['AI kills per death', s.ai_kills >= minK ? ratio(s.ai_kills / Math.max(1, s.deaths)) : '—'],
         ['Headshot %', s.ai_kills >= minK ? pct(s.ai_headshots / s.ai_kills * 100) : '—'], ['Kill streak', num(s.best_kill_streak)],
         ['Longest AI kill', metres(s.longest_ai_kill_m), s.longest_ai_kill_weapon], ['Longest shot', metres(s.longest_hit_m), s.longest_hit_weapon],
@@ -445,7 +475,7 @@
       var sm = hasScope() ? summary() : null, rec = (sm && sm.records) || {};
       var r = function (k, fmt, withExtra) { var x = rec[k]; return x ? [fmt(x[2]), x[1] + (withExtra && x[3] ? ' · ' + x[3] : '')] : [null, null]; };
       var cards = [
-        ['Most hours played'].concat(r('playtime', hours)), ['Most AI kills'].concat(r('ai_kills', num)),
+        ['Most hours played'].concat(cfPlaytimeRows() ? [hours(cfPlaytimeRows()[0].value), cfPlaytimeRows()[0].name] : r('playtime', hours)), ['Most AI kills'].concat(r('ai_kills', num)),
         ['Longest AI kill'].concat(r('longest_ai_kill', metres, true)), ['Best kill streak'].concat(r('best_kill_streak', num)),
         ['Longest life'].concat(r('longest_life', dur)), ['Furthest travelled'].concat(r('travel', dist))
       ];
