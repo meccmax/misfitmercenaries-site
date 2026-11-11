@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install MM Launcher — Misfit Mercenaries</title>
+<meta name="description" content="Step-by-step guide to installing MM Launcher, the Misfit Mercenaries DayZ launcher: download, install, first start and joining a server.">
+<meta name="theme-color" content="#FF6B1A">
+<meta property="og:title" content="Install MM Launcher — Misfit Mercenaries">
+<meta property="og:description" content="Step-by-step guide to installing MM Launcher, the Misfit Mercenaries DayZ launcher: download, install, first start and joining a server.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/css/mm.css">
+<script src="assets/js/site.js" defer></script>
+</head>
+<body data-page="tools">
+<div id="site-header"></div>
+<main id="main">
+<section class="page-head gridbg">
+  <div class="wrap">
+    <div class="hud-o"><a href="tools.html">// Tools</a> / MM Launcher</div>
+    <h1 class="display">Install <span class="accent">MM Launcher</span></h1>
+    <p class="lead">The launcher finds every Misfit Mercenaries server, downloads and updates the mods for you through Steam, and starts DayZ connected to the server. Setup takes about two minutes.</p>
+    <div class="tags"><span class="tag">Windows 10 or 11</span><span class="tag">Steam with DayZ</span><span class="tag">No admin password needed</span><span class="tag tag-o">Free &amp; open source</span></div>
+    <div class="row" style="padding-top:8px"><a class="btn btn-p" href="https://github.com/meccmax/mm-launcher/releases/latest">Download MM Launcher</a><a class="btn btn-g" href="tools.html#mm-launcher">Back to Tools</a></div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <ol class="guide">
+    <li class="guide-step panel brk" id="step-1">
+      <div class="guide-head"><span class="num">01</span><h2 class="h3">Download the installer</h2></div>
+      <p class="body">Open the <a href="https://github.com/meccmax/mm-launcher/releases/latest">latest release on GitHub</a>, scroll down to <b>Assets</b> and click <span class="ui">MMLauncher-Setup.exe</span>.</p>
+      <div class="guide-shots"><figure style="max-width:1100px"><a href="assets/img/launcher/install/01-github-release.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/01-github-release.webp" width="1100" height="917" alt="GitHub release page with MMLauncher-Setup.exe highlighted under Assets" loading="lazy"></a></figure></div>
+      <p class="small">Prefer nothing installed? Download <span class="ui">MMLauncher.exe</span> instead. It's the same launcher as one file you can run from anywhere. Skip to <a href="#step-5">step 5</a>.</p>
+    </li>
+
+    <li class="guide-step panel brk" id="step-2">
+      <div class="guide-head"><span class="num">02</span><h2 class="h3">Tell your browser to keep it</h2></div>
+      <p class="body">Because the launcher is new and not code-signed yet, your browser may say it <i>isn't commonly downloaded</i>. In Edge, open the <span class="ui">&middot;&middot;&middot;</span> menu next to the download and choose <span class="ui">Keep</span>. On the next box, click the arrow next to <b>Delete</b> and choose <span class="ui">Keep anyway</span>.</p>
+      <div class="guide-shots">
+        <figure style="max-width:695px"><a href="assets/img/launcher/install/02-edge-keep.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/02-edge-keep.webp" width="695" height="435" alt="Edge downloads menu with Keep highlighted" loading="lazy"></a></figure>
+        <figure style="max-width:380px"><a href="assets/img/launcher/install/02-edge-keep-anyway.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/02-edge-keep-anyway.webp" width="457" height="637" alt="Edge warning with Keep anyway highlighted" loading="lazy"></a></figure>
+      </div>
+      <div class="guide-note"><b>Why the warning?</b> Windows warns about any program that isn't signed with a paid certificate and hasn't been downloaded by many people yet. The launcher's code is public on <a href="https://github.com/meccmax/mm-launcher">GitHub</a>, and every update is checked against its published checksums before it installs.</div>
+    </li>
+
+    <li class="guide-step panel brk" id="step-3">
+      <div class="guide-head"><span class="num">03</span><h2 class="h3">Open the file</h2></div>
+      <p class="body">Click <span class="ui">Open file</span> under the download (or double-click it in your Downloads folder). If a blue <b>Windows protected your PC</b> box appears, click <b>More info</b>, then <span class="ui">Run anyway</span>.</p>
+      <div class="guide-shots"><figure style="max-width:460px"><a href="assets/img/launcher/install/03-open-file.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/03-open-file.webp" width="501" height="230" alt="Edge downloads with Open file highlighted" loading="lazy"></a></figure></div>
+    </li>
+
+    <li class="guide-step panel brk" id="step-4">
+      <div class="guide-head"><span class="num">04</span><h2 class="h3">Run the setup</h2></div>
+      <p class="body">Select <b>I accept the agreement</b> and click <span class="ui">Next</span>. Keep <b>Create a desktop shortcut</b> ticked if you want one, click <span class="ui">Next</span>, then <span class="ui">Install</span>. When it's done, leave <b>Start MM Launcher</b> ticked and click <span class="ui">Finish</span>.</p>
+      <div class="guide-shots guide-shots-2">
+        <figure><a href="assets/img/launcher/install/04-setup-license.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/04-setup-license.webp" width="811" height="626" alt="Setup license page with I accept the agreement and Next highlighted" loading="lazy"></a><figcaption>1 · Accept the agreement</figcaption></figure>
+        <figure><a href="assets/img/launcher/install/04-setup-shortcut.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/04-setup-shortcut.webp" width="807" height="630" alt="Setup additional tasks with Create a desktop shortcut and Next" loading="lazy"></a><figcaption>2 · Desktop shortcut</figcaption></figure>
+        <figure><a href="assets/img/launcher/install/04-setup-install.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/04-setup-install.webp" width="800" height="620" alt="Setup ready to install with Install highlighted" loading="lazy"></a><figcaption>3 · Install</figcaption></figure>
+        <figure><a href="assets/img/launcher/install/04-setup-finish.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/04-setup-finish.webp" width="796" height="617" alt="Setup finished with Start MM Launcher ticked and Finish highlighted" loading="lazy"></a><figcaption>4 · Finish</figcaption></figure>
+      </div>
+    </li>
+
+    <li class="guide-step panel brk" id="step-5">
+      <div class="guide-head"><span class="num">05</span><h2 class="h3">First start</h2></div>
+      <p class="body">Make sure <b>Steam is running</b> and signed in to the account that owns DayZ. The launcher asks two quick questions the first time:</p>
+      <ul class="guide-list">
+        <li><b>Your in-game name.</b> DayZ only gets your name from its own launcher, so without this you'd spawn as "Survivor". Type the name you want and click <span class="ui">Save name</span>.</li>
+        <li><b>Anonymous usage stats.</b> Completely optional. Either answer is fine, and you can change it any time in Settings.</li>
+      </ul>
+      <div class="guide-shots">
+        <figure style="max-width:470px"><a href="assets/img/launcher/install/05-name.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/05-name.webp" width="470" height="246" alt="What is your in-game name prompt with Save name highlighted" loading="lazy"></a></figure>
+        <figure style="max-width:460px"><a href="assets/img/launcher/install/05-usage-stats.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/05-usage-stats.webp" width="460" height="303" alt="Send anonymous usage stats prompt" loading="lazy"></a></figure>
+      </div>
+    </li>
+
+    <li class="guide-step panel brk" id="step-6">
+      <div class="guide-head"><span class="num">06</span><h2 class="h3">Pick a server and join</h2></div>
+      <p class="body">Our servers show up on the left on their own. Click one, then <span class="ui">JOIN SERVER</span>. The launcher downloads and updates every mod that server needs through Steam (Steam briefly shows you as "Playing DayZ" while it does), then starts DayZ connected to the server.</p>
+      <div class="guide-shots"><figure style="max-width:1100px"><a href="assets/img/launcher/install/06-join-server.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/06-join-server.webp" width="1100" height="425" alt="MM Launcher main screen with the MM servers on the left and JOIN SERVER highlighted" loading="lazy"></a></figure></div>
+      <p class="body">The first join downloads the whole mod pack, which can be <b>20&ndash;30 GB</b>, so give it time. After that, only changed mods download.</p>
+      <p class="body">Server has a password? Type it in, and tick <b>Remember this password on this PC</b> so you're not asked again. <span class="ui">Show</span> lets you check what you typed.</p>
+      <div class="guide-shots"><figure style="max-width:420px"><a href="assets/img/launcher/install/06-password.webp" target="_blank" rel="noopener"><img src="assets/img/launcher/install/06-password.webp" width="420" height="227" alt="Server password prompt with Remember this password on this PC highlighted" loading="lazy"></a></figure></div>
+    </li>
+  </ol>
+</section>
+
+<section class="band">
+  <div class="wrap section stack-lg">
+    <div class="stack" style="gap:12px"><div class="hud-o">// Field notes</div><h2 class="h2">Good to know</h2></div>
+    <div class="grid g-240" style="gap:16px">
+      <div class="panel pad stack" style="gap:8px"><h3 class="h4">It updates itself</h3><p class="body">When a new version is out, the launcher asks. Click Update and it restarts on the new version.</p></div>
+      <div class="panel pad stack" style="gap:8px"><h3 class="h4">Rejoin after a crash</h3><p class="body">Tick "Rejoin automatically if DayZ crashes" and it puts you back on the server, waiting if it's restarting.</p></div>
+      <div class="panel pad stack" style="gap:8px"><h3 class="h4">Free up space</h3><p class="body">The MODS tab shows mods no server uses or that you haven't played with in a month, and removes them in one click.</p></div>
+      <div class="panel pad stack" style="gap:8px"><h3 class="h4">Find other servers</h3><p class="body">All servers lists every DayZ server. Search by mod name and filter by country, PvE, player count or AI.</p></div>
+      <div class="panel pad stack" style="gap:8px"><h3 class="h4">Something broken?</h3><p class="body">Click Report a problem in the launcher. It sends staff the logs we need, with your PC's user name taken out.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <div class="panel brk pad-lg between" style="align-items:center">
+    <div class="stack" style="max-width:720px;gap:10px"><div class="hud-o">// Need a hand?</div><h2 class="h3" style="font-size:28px">Stuck on a step?</h2><p class="body">Ask in the Discord and someone will help. MM Launcher is optional: DZSA Launcher and the regular DayZ launcher work on our servers too.</p></div>
+    <div class="row"><a class="btn btn-p" href="https://www.dsc.gg/mmservers">Ask in Discord</a><a class="btn btn-g" href="https://github.com/meccmax/mm-launcher">Source on GitHub</a></div>
+  </div>
+</section>
+</main>
+<div id="site-footer"></div>
+</body>
+</html>

@@ -270,3 +270,19 @@ button.media-tile:hover img{transform:scale(1.03)}
 .dbar-v{font-size:13px;color:var(--ink);text-align:right}
 .dbar-v em{font-style:normal;color:var(--muted);margin-left:6px}
 @media (max-width:640px){.dbar{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}.dbar-t{grid-column:1 / -1;grid-row:2}}
+
+/* ---------- Install guide (launcher-install.html) ---------- */
+.guide{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:24px}
+.guide-step{padding:36px 40px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:96px}
+.guide-head{display:flex;align-items:center;gap:18px}
+.guide-step .body a,.guide-step .small a,.guide-note a{color:var(--orange-2)}
+.ui{display:inline-block;padding:1px 8px;border:1px solid #3A3F47;background:#16181C;font-family:var(--font-mono);font-size:.82em;color:#fff;white-space:nowrap}
+.guide-shots{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.guide-shots figure{margin:0;flex:1 1 260px}
+.guide-shots img{display:block;width:100%;height:auto;border:1px solid #2C3037;background:#0E1013}
+.guide-shots a:hover img{border-color:var(--orange)}
+.guide-shots figcaption{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:8px}
+.guide-shots-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.guide-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--silver);font-size:17px;line-height:1.55}
+.guide-note{padding:14px 18px;border-left:3px solid var(--orange);background:#16181C;color:var(--silver);font-size:15px;line-height:1.55}
+@media (max-width:640px){.guide-step{padding:24px 20px}.guide-shots-2{grid-template-columns:1fr}}
